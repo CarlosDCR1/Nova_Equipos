@@ -1,0 +1,229 @@
+/* =====================================================
+   Pantalla Estudiante
+   Se apoya en la hoja base: usa sus mismos colores fijos
+   (sin variables) y respeta sus estilos globales de
+   label, input, select y botones.
+   ===================================================== */
+
+/* ---------- TÍTULO ---------- */
+.page-title {
+    color: #212529;
+    font-size: 1.5em;
+    font-weight: 600;
+    margin: 0 0 25px;
+    padding-bottom: 15px;
+    border-bottom: 3px solid #007bff;
+}
+
+/* ---------- TARJETAS (buscador y formulario) ---------- */
+.filter-card {
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 25px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px 20px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.field label {
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #495057;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 1em;
+    color: #212529;
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.field select {
+    height: 44px;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.field input::placeholder {
+    color: #6c757d;
+}
+
+/* ---------- BOTONES ---------- */
+.filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.filter-actions .btn {
+    margin-top: 0;
+}
+
+.btn {
+    padding: 10px 15px;
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: none;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: #ffffff;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #bb2d3b;
+}
+
+.btn-light {
+    background-color: #ffffff;
+    color: #212529;
+    border: 1px solid #dee2e6;
+}
+
+.btn-light:hover:not(:disabled) {
+    background-color: #e9ecef;
+}
+
+/* ---------- TABLA ---------- */
+.table-card {
+    background: none;
+    border: none;
+    box-shadow: none;
+    margin-bottom: 25px;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    white-space: nowrap;
+}
+
+.data-table th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.data-table td {
+    color: #212529;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.data-table tbody tr {
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f1f7ff;
+}
+
+/* Fila seleccionada */
+.data-table tbody tr.selected,
+.data-table tbody tr.selected:hover {
+    background-color: #cfe2ff;
+}
+
+/* Mensajes dentro de la tabla */
+.empty-state,
+.error-state {
+    text-align: center;
+    padding: 30px 15px;
+    color: #6c757d;
+}
+
+.error-state {
+    color: #721c24;
+}
+
+/* ---------- ESTADO ---------- */
+.badge {
+    font-weight: 600;
+}
+
+.badge.activo {
+    color: #28a745;
+}
+
+.badge.inactivo {
+    color: #dc3545;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.3em;
+        text-align: center;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        flex-direction: column;
+    }
+
+    .filter-actions .btn {
+        width: 100%;
+    }
+}

@@ -1,6 +1,6 @@
 
-CREATE DATABASE IF NOT EXISTS laboratorio_inventario CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE laboratorio_inventario;
+CREATE DATABASE IF NOT EXISTS Nova_Equipos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE Nova_Equipos;
 SET default_storage_engine = InnoDB;
 
 CREATE TABLE jornada (
