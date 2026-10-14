@@ -1,0 +1,154 @@
+:root {
+  --navy-950: #0a1530;
+  --navy-900: #2780a3;
+  --navy-800: #13295c;
+  --blue: #2f6fed;
+  --blue-light: #5b8dff;
+  --bg: #eef2fa;
+  --card: #ffffff;
+  --ink: #16204a;
+  --muted: #6b7690;
+  --border: #dde4f4;
+  --radius: 12px;
+  --sidebar-w: 270px;
+  --topbar-h: 64px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+a { text-decoration: none; color: inherit; }
+
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: url("../Resources/side_bar_icon.png") center / cover no-repeat;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.brand-mark {
+  width: 100%;
+  height: 70px;
+  background: url("../Resources/Icn_NovaEquipos.png") center / contain no-repeat;
+  font-size: 0;
+}
+
+.nav-group { padding: 0.8rem 0.9rem; }
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.nav-link {
+  display: block;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.72);
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-link:hover {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+}
+
+.nav-link.active {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+
+.main-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar {
+  height: var(--topbar-h);
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.topbar-menu-btn {
+  display: none;
+  font-size: 1.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.topbar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--blue);
+}
+
+.topbar-user {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--navy-900);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-content {
+  padding: 2rem 2.2rem;
+}
+
+@media (max-width: 960px) {
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 50;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .topbar-menu-btn { display: block; }
+  .page-content { padding: 1.4rem 1rem; }
+}
