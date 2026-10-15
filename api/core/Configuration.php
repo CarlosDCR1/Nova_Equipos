@@ -13,7 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 #   ENVIRONMENT DEFINITIONS
 
-define("HOST_DB", Env::get('DATABASE_URL'));
+define("HOST_DB", Env::get('DATABASE_HOST'));
 define("USER_DB", Env::get('DATABASE_USER'));
 define("PASSWORD_DB", Env::get('DATABASE_PSSW'));
 define("DATABASE", Env::get('DATABASE_NAME'));

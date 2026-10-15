@@ -36,20 +36,9 @@ class Empleado
 
         $where = $condiciones ? ("WHERE " . implode(" AND ", $condiciones)) : "";
 
-        $query = "SELECT
-                    id_empleado,
-                    nombre,
-                    apellidos,
-                    fecha_nacimiento,
-                    telefono_empleado,
-                    dpi,
-                    estado_civil,
-                    correo_institucional,
-                    estado_empleado,
-                    fecha_creacion
-                  FROM empleado
-                  $where
-                  ORDER BY id_empleado DESC";
+        $query = "SELECT id_empleado, nombre, apellidos, fecha_nacimiento, telefono_empleado, dpi, estado_civil, correo_institucional,
+         estado_empleado, fecha_creacion
+                  FROM empleado $where ORDER BY id_empleado DESC";
 
         $statement = $this->connection->prepare($query);
         $statement->execute($params);
@@ -70,14 +59,9 @@ class Empleado
         $statement = $this->connection->prepare($query);
 
         $statement->execute([
-            ':nombre'           => $d['nombre'],
-            ':apellidos'        => $d['apellidos'] ?? null,
-            ':fecha_nacimiento' => $d['fecha_nacimiento'] ?: null,
-            ':telefono'         => $d['telefono_empleado'] ?? null,
-            ':dpi'              => $d['dpi'] ?? null,
-            ':estado_civil'     => $d['estado_civil'] ?? null,
-            ':correo'           => $d['correo_institucional'],
-            ':estado'           => $d['estado_empleado'] ?? 'ACTIVO',
+            ':nombre' => $d['nombre'], ':apellidos'  => $d['apellidos'] ?? null, ':fecha_nacimiento' => $d['fecha_nacimiento'] ?: null,
+            ':telefono'  => $d['telefono_empleado'] ?? null, ':dpi'   => $d['dpi'] ?? null, ':estado_civil'   => $d['estado_civil'] ?? null,
+            ':correo' => $d['correo_institucional'], ':estado'  => $d['estado_empleado'] ?? 'ACTIVO',
         ]);
 
         $this->response->success("Empleado agregado correctamente", [], 1);
@@ -86,27 +70,14 @@ class Empleado
     // PUT
     function editar(int $id, array $d)
     {
-        $query = "UPDATE empleado SET
-                    nombre = :nombre,
-                    apellidos = :apellidos,
-                    fecha_nacimiento = :fecha_nacimiento,
-                    telefono_empleado = :telefono,
-                    dpi = :dpi,
-                    estado_civil = :estado_civil,
-                    correo_institucional = :correo,
-                    estado_empleado = :estado
+        $query = "UPDATE empleado SET nombre = :nombre, apellidos = :apellidos, telefono_empleado = :telefono,
+                    dpi = :dpi, estado_civil = :estado_civil, correo_institucional = :correo, estado_empleado = :estado
                   WHERE id_empleado = :id";
 
-        $params = [
-            ':nombre'           => $d['nombre'],
-            ':apellidos'        => $d['apellidos'] ?? null,
-            ':fecha_nacimiento' => $d['fecha_nacimiento'] ?: null,
-            ':telefono'         => $d['telefono_empleado'] ?? null,
-            ':dpi'              => $d['dpi'] ?? null,
-            ':estado_civil'     => $d['estado_civil'] ?? null,
-            ':correo'           => $d['correo_institucional'],
-            ':estado'           => $d['estado_empleado'] ?? 'ACTIVO',
-            ':id'               => $id,
+        $params = [ ':nombre'  => $d['nombre'], ':apellidos'  => $d['apellidos'] ?? null,
+            ':fecha_nacimiento' => $d['fecha_nacimiento'] ?: null,':telefono'  => $d['telefono_empleado'] ?? null,
+            ':dpi'   => $d['dpi'] ?? null,':estado_civil' => $d['estado_civil'] ?? null,':correo' => $d['correo_institucional'],
+            ':estado'  => $d['estado_empleado'] ?? 'ACTIVO', ':id' => $id,
         ];
 
         return $this->connection->prepare($query)->execute($params);

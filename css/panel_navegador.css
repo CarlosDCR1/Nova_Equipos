@@ -61,6 +61,15 @@ a { text-decoration: none; color: inherit; }
 
 .nav-group { padding: 0.8rem 0.9rem; }
 
+.nav-group-title {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+
 .nav-list {
   list-style: none;
   display: flex;
