@@ -14,11 +14,8 @@ switch ($method) {
             $empleado = new Empleado($conection, $response);
 
             
-            $filtros = [
-                'nombre'    => $_GET['nombre']    ?? null,
-                'apellidos' => $_GET['apellidos'] ?? null,
-                'correo'    => $_GET['correo']    ?? null,
-                'estado'    => $_GET['estado']    ?? null,
+            $filtros = [ 'nombre'    => $_GET['nombre']    ?? null, 'apellidos' => $_GET['apellidos'] ?? null,
+                'correo'    => $_GET['correo']  ?? null, 'estado'  => $_GET['estado']    ?? null,
             ];
 
             $empleado->getAll($filtros);

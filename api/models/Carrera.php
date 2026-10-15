@@ -17,18 +17,19 @@ class Carrera
         $condiciones = [];
         $params = [];
         if (!empty($filtros['id_facultad'])) {
-            $condiciones[] = "id_facultad = :id_facultad";
+            $condiciones[] = "c.id_facultad = :id_facultad";
             $params[':id_facultad'] = $filtros['id_facultad'];
         }
         if (!empty($filtros['nombre'])) {
-            $condiciones[] = "nombre_carrera LIKE :nombre";
+            $condiciones[] = "c.nombre_carrera LIKE :nombre";
             $params[':nombre'] = "%{$filtros['nombre']}%";
         }
         $where = $condiciones ? ("WHERE " . implode(" AND ", $condiciones)) : "";
-        $query = "SELECT id_carrera, id_facultad, nombre_carrera
-                  FROM carrera
+        $query = "SELECT c.id_carrera, c.id_facultad, f.nombre_facultad, c.nombre_carrera
+                  FROM carrera c
+                  LEFT JOIN facultad f ON f.id_facultad = c.id_facultad
                   $where
-                  ORDER BY id_carrera DESC";
+                  ORDER BY c.id_carrera DESC";
         $statement = $this->connection->prepare($query);
         $statement->execute($params);
         $result = $statement->fetchAll(PDO::FETCH_ASSOC);

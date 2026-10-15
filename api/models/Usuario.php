@@ -28,16 +28,8 @@ class Usuario
 
         $where = $condiciones ? ("WHERE " . implode(" AND ", $condiciones)) : "";
 
-        $query = "SELECT
-                    u.idUsuario,
-                    u.idEmpleado,
-                    e.nombre      AS empleado_nombre,
-                    e.apellidos   AS empleado_apellidos,
-                    u.nombreUsuario,
-                    u.ultimoAccesoUsuario,
-                    u.intentosFallidosUsuario,
-                    u.is_active,
-                    u.created_at
+        $query = "SELECT u.idUsuario, u.idEmpleado, e.nombre      AS empleado_nombre,  e.apellidos   AS empleado_apellidos,
+                    u.nombreUsuario, u.ultimoAccesoUsuario, u.intentosFallidosUsuario, u.is_active, u.created_at
                   FROM tblusuario u
                   INNER JOIN empleado e ON u.idEmpleado = e.id_empleado
                   $where
@@ -67,12 +59,8 @@ class Usuario
 
         $statement = $this->connection->prepare($query);
 
-        $statement->execute([
-            ':idEmpleado'    => $d['idEmpleado'],
-            ':nombreUsuario' => $d['nombreUsuario'],
-            ':contrasena'    => $hash,
-            ':is_active'     => $d['is_active'] ?? 1,
-        ]);
+        $statement->execute([':idEmpleado'    => $d['idEmpleado'],':nombreUsuario' => $d['nombreUsuario'],
+            ':contrasena'    => $hash,':is_active'     => $d['is_active'] ?? 1,]);
 
         $this->response->success("Usuario agregado correctamente", [], 1);
     }
@@ -80,17 +68,8 @@ class Usuario
     // PUT 
     function editar(int $id, array $d)
     {
-        $set = [
-            "idEmpleado = :idEmpleado",
-            "nombreUsuario = :nombreUsuario",
-            "is_active = :is_active",
-        ];
-        $params = [
-            ':idEmpleado'    => $d['idEmpleado'],
-            ':nombreUsuario' => $d['nombreUsuario'],
-            ':is_active'     => $d['is_active'] ?? 1,
-            ':id'            => $id,
-        ];
+        $set = ["idEmpleado = :idEmpleado", "nombreUsuario = :nombreUsuario","is_active = :is_active",];
+        $params = [':idEmpleado'    => $d['idEmpleado'],':nombreUsuario' => $d['nombreUsuario'],':is_active' => $d['is_active'] ?? 1,':id' => $id,];
 
         if (!empty($d['contrasenaUsuario'])) {
             $set[] = "contrasenaUsuario = :contrasena";
