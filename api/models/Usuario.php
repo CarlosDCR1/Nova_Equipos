@@ -17,9 +17,9 @@ class Usuario
         $condiciones = [];
         $params = [];
 
-        if (!empty($filtros['nombreUsuario'])) {
-            $condiciones[] = "u.nombreUsuario LIKE :nombreUsuario";
-            $params[':nombreUsuario'] = "%{$filtros['nombreUsuario']}%";
+        if (!empty($filtros['idEmpleado'])) {
+            $condiciones[] = "u.idEmpleado = :idEmpleado";
+            $params[':idEmpleado'] = (int) $filtros['idEmpleado'];
         }
         if ($filtros['is_active'] !== null && $filtros['is_active'] !== '') {
             $condiciones[] = "u.is_active = :is_active";

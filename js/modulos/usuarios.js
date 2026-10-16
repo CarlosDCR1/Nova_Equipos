@@ -16,13 +16,14 @@ window.Modulos.usuarios = Crud.crear({
     },
 
     busqueda: [
-        { valor: "usuario", texto: "Usuario" }
+        //{ valor: "usuario", texto: "Usuario" }
+        { valor: "nombreUsuario", texto: "Usuario" }
     ],
 
     filtros: [
         { clave: "idEmpleado", etiqueta: "Empleado", fuente: "empleado", vacio: "Todos" },
-        { clave: "estado", etiqueta: "Estado", vacio: "Todos",
-          opciones: [{ valor: "1", texto: "Activo" }, { valor: "0", texto: "Inactivo" }] }
+        { clave: "is_active", etiqueta: "Estado", vacio: "Todos",
+        opciones: [{ valor: "1", texto: "Activo" }, { valor: "0", texto: "Inactivo" }] }
     ],
 
     columnas: [

@@ -2,7 +2,9 @@ window.Crud = {
    
     badge(valor) {
         const span = document.createElement("span");
-        const activo = (valor || "").toUpperCase() === "ACTIVO";
+        const v = String(valor ?? "").toUpperCase();
+        const activo = v === "ACTIVO" || v === "1";
+        //const activo = (valor || "").toUpperCase() === "ACTIVO";
         span.className = "badge " + (activo ? "activo" : "inactivo");
         span.textContent = activo ? "Activo" : "Inactivo";
         return span;
@@ -72,6 +74,7 @@ window.Crud = {
 
                 // aqui cargamos las fuentes de datos de todos los CRUDS para los select
                 async function cargarFuentes() {
+                   
                     await Promise.all(Object.entries(opcionesCrud.fuentes || {}).map(async ([clave, fuente]) => {
                         try {
                             const res = await fetch(fuente.api);
@@ -84,12 +87,16 @@ window.Crud = {
                     }));
                 }
 
+                const leerTexto = (f, r) => typeof f.texto === "function" ? f.texto(r) : r[f.texto];
+
                 function opcionesDe(def) {
                     if (def.fuente) {
                         const f = opcionesCrud.fuentes[def.fuente];
-                        return (fuentes[def.fuente] || []).map((r) => ({ valor: r[f.valor], texto: r[f.texto] }));
+                        return (fuentes[def.fuente] || []).map((r) => ({ valor: r[f.valor], texto: leerTexto(f, r) }));
+                        //return (fuentes[def.fuente] || []).map((r) => ({ valor: r[f.valor], texto: r[f.texto] }));
                     }
                     return def.opciones || [];
+                    return r ? leerTexto(f, r) : id;
                 }
 
                 function textoDeFuente(clave, id) {
@@ -120,6 +127,7 @@ window.Crud = {
                         control.type = def.tipo || "text";
                         if (def.maxlength) control.maxLength = def.maxlength;
                         if (def.placeholder) control.placeholder = def.placeholder;
+                         limpiar();
                     }
                     control.id = id;
                     if (def.name) control.name = def.name;
@@ -298,7 +306,7 @@ window.Crud = {
 
                 // ---------- EVENTOS ----------
                 form.addEventListener("submit", (e) => e.preventDefault());
-
+                
                 btn("agregar").addEventListener("click", agregar);
                 btn("editar").addEventListener("click", editar);
                 btn("eliminar").addEventListener("click", eliminar);
@@ -318,6 +326,7 @@ window.Crud = {
 
                 // ---------- INICIO ----------
                 mensaje("empty-state", `Cargando ${opcionesCrud.plural}...`);
+                
                 await cargarFuentes();
                 construirBuscador();
                 construirFormulario();

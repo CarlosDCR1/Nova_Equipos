@@ -14,7 +14,7 @@ switch ($method) {
             $usuario = new Usuario($conection, $response);
 
             $filtros = [
-                'nombreUsuario' => $_GET['nombreUsuario'] ?? null, 'is_active'     => $_GET['is_active'] ?? null,];
+                'idEmpleado' => $_GET['idEmpleado'] ?? null,'nombreUsuario' => $_GET['nombreUsuario'] ?? null, 'is_active'     => $_GET['is_active'] ?? null,];
 
             $usuario->getAll($filtros);
 
