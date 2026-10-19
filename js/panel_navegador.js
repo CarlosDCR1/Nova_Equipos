@@ -1,10 +1,61 @@
 const contenido = document.getElementById("contenido");
 const sidebar = document.getElementById("sidebar");
 const enlaces = sidebar.querySelectorAll(".nav-link");
+const brandLogo = document.getElementById('brandLogo');
+// menu para un boton
+const menuBtn = document.getElementById("menuBtn");
+const mqMovil = window.matchMedia("(max-width: 960px)");
+
 
 
 window.Modulos = window.Modulos || {};
 const cargados = new Set();
+
+document.querySelectorAll(".nav-group-title").forEach((titulo) => {
+    titulo.setAttribute("role", "button");
+    titulo.setAttribute("tabindex", "0");
+    titulo.setAttribute("aria-expanded", "true");
+
+    const alternarGrupo = () => {
+        const grupo = titulo.closest(".nav-group");
+        const cerrado = grupo.classList.toggle("collapsed");
+        titulo.setAttribute("aria-expanded", String(!cerrado));
+    };
+
+    titulo.addEventListener("click", alternarGrupo);
+    titulo.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            alternarGrupo();
+        }
+    });
+});
+
+function alternarMenu() {
+    if (mqMovil.matches) {
+        sidebar.classList.toggle("open");
+    } else {
+        sidebar.classList.toggle("mini");
+        try {
+            localStorage.setItem("sidebarMini", sidebar.classList.contains("mini") ? "1" : "0");
+        } catch {}
+    }
+}
+
+// Recordar el estado entre recargas
+    try {
+        if (localStorage.getItem("sidebarMini") === "1") sidebar.classList.add("mini");
+    } catch {}
+
+    brandLogo.addEventListener("click", alternarMenu);
+    brandLogo.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            alternarMenu();
+    }
+});
+
+menuBtn.addEventListener("click", alternarMenu);
 
 function cargarScript(nombre) {
     return new Promise((resolve, reject) => {
