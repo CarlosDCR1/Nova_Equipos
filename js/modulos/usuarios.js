@@ -16,14 +16,13 @@ window.Modulos.usuarios = Crud.crear({
     },
 
     busqueda: [
-        //{ valor: "usuario", texto: "Usuario" }
-        { valor: "nombreUsuario", texto: "Usuario" }
+        { valor: "nombre", texto: "Usuario" }
     ],
 
     filtros: [
         { clave: "idEmpleado", etiqueta: "Empleado", fuente: "empleado", vacio: "Todos" },
         { clave: "is_active", etiqueta: "Estado", vacio: "Todos",
-        opciones: [{ valor: "1", texto: "Activo" }, { valor: "0", texto: "Inactivo" }] }
+          opciones: [{ valor: "1", texto: "Activo" }, { valor: "0", texto: "Inactivo" }] }
     ],
 
     columnas: [
@@ -39,11 +38,8 @@ window.Modulos.usuarios = Crud.crear({
 
     campos: [
         { name: "idEmpleado", etiqueta: "Empleado", fuente: "empleado", required: true },
-        { name: "nombreUsuario", etiqueta: "Usuario", maxlength: 50, required: true },
-        { name: "contrasenaUsuario", etiqueta: "Contraseña", tipo: "password",
-          autocomplete: "new-password",
-          requeridoAlCrear: true,
-          ayudaEditar: "Déjalo en blanco para no cambiar la contraseña actual." },
+        { name: "nombreUsuario", etiqueta: "Usuario", maxlength: 50, required: true, autocomplete: "off" },
+        { name: "contrasenaUsuario", etiqueta: "Contraseña", tipo: "password", autocomplete: "new-password" },
         { name: "is_active", etiqueta: "Estado", defecto: "1",
           opciones: [{ valor: "1", texto: "Activo" }, { valor: "0", texto: "Inactivo" }] }
     ]
