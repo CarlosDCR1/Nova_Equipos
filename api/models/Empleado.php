@@ -69,19 +69,19 @@ class Empleado
 
     // PUT
     function editar(int $id, array $d)
-    {
-        $query = "UPDATE empleado SET nombre = :nombre, apellidos = :apellidos, telefono_empleado = :telefono,
-                    dpi = :dpi, estado_civil = :estado_civil, correo_institucional = :correo, estado_empleado = :estado
-                  WHERE id_empleado = :id";
+{
+    $query = "UPDATE empleado SET nombre = :nombre, apellidos = :apellidos, fecha_nacimiento = :fecha_nacimiento, telefono_empleado = :telefono,
+                dpi = :dpi, estado_civil = :estado_civil, correo_institucional = :correo, estado_empleado = :estado
+              WHERE id_empleado = :id";
 
-        $params = [ ':nombre'  => $d['nombre'], ':apellidos'  => $d['apellidos'] ?? null,
-            ':fecha_nacimiento' => $d['fecha_nacimiento'] ?: null,':telefono'  => $d['telefono_empleado'] ?? null,
-            ':dpi'   => $d['dpi'] ?? null,':estado_civil' => $d['estado_civil'] ?? null,':correo' => $d['correo_institucional'],
-            ':estado'  => $d['estado_empleado'] ?? 'ACTIVO', ':id' => $id,
-        ];
+    $params = [ ':nombre'  => $d['nombre'], ':apellidos'  => $d['apellidos'] ?? null,
+        ':fecha_nacimiento' => $d['fecha_nacimiento'] ?: null,':telefono'  => $d['telefono_empleado'] ?? null,
+        ':dpi'   => $d['dpi'] ?? null,':estado_civil' => $d['estado_civil'] ?: null,':correo' => $d['correo_institucional'],
+        ':estado'  => $d['estado_empleado'] ?? 'ACTIVO', ':id' => $id,
+    ];
 
-        return $this->connection->prepare($query)->execute($params);
-    }
+    return $this->connection->prepare($query)->execute($params);
+}
 
     // DELETE
     function eliminar(int $id)

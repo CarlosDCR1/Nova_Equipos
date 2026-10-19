@@ -79,6 +79,7 @@ window.Crud = {
                         try {
                             const res = await fetch(fuente.api);
                             const json = await res.json();
+                            if (json.code !== 1) throw new Error(json.message);    
                             fuentes[clave] = json.data || [];
                         } catch (e) {
                             fuentes[clave] = [];
@@ -96,14 +97,14 @@ window.Crud = {
                         //return (fuentes[def.fuente] || []).map((r) => ({ valor: r[f.valor], texto: r[f.texto] }));
                     }
                     return def.opciones || [];
-                    return r ? leerTexto(f, r) : id;
+                   
                 }
 
                 function textoDeFuente(clave, id) {
-                    const f = opcionesCrud.fuentes[clave];
-                    const r = (fuentes[clave] || []).find((x) => String(x[f.valor]) === String(id));
-                    return r ? r[f.texto] : id;
-                }
+                const f = opcionesCrud.fuentes[clave];
+                const r = (fuentes[clave] || []).find((x) => String(x[f.valor]) === String(id));
+                return r ? leerTexto(f, r) : id;
+            }
 
                 // Awui creamos ya lo que va en el html pero manipulado de forma general para todos los CRUDS
                 //  ya que todos tienen la misma estructura de buscador, tabla y formulario manipulado en el DOM
@@ -127,7 +128,11 @@ window.Crud = {
                         control.type = def.tipo || "text";
                         if (def.maxlength) control.maxLength = def.maxlength;
                         if (def.placeholder) control.placeholder = def.placeholder;
-                         limpiar();
+                       
+                        if (def.pattern) control.pattern = def.pattern;
+                        if (def.min) control.min = def.min;
+                        if (def.max) control.max = def.max;
+                        if (def.mensaje) control.title = def.mensaje;
                     }
                     control.id = id;
                     if (def.name) control.name = def.name;

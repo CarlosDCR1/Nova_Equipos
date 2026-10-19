@@ -1,4 +1,11 @@
+
+const hoy = new Date();
+const fmt = (d) => d.toLocaleDateString("en-CA"); 
+
+const fechaMax = fmt(new Date(hoy.getFullYear() - 18, hoy.getMonth(), hoy.getDate()));
+const fechaMin = fmt(new Date(hoy.getFullYear() - 66, hoy.getMonth(), hoy.getDate() + 1));
 window.Modulos = window.Modulos || {};
+
 
 window.Modulos.empleados = Crud.crear({
     titulo: "Mantenimiento de Empleados",
@@ -6,6 +13,8 @@ window.Modulos.empleados = Crud.crear({
     id: "id_empleado",
     singular: "empleado",
     plural: "empleados",
+
+    
 
 
     busqueda: [
@@ -45,7 +54,8 @@ window.Modulos.empleados = Crud.crear({
               { valor: "DIVORCIADO", texto: "Divorciado/a" },
               { valor: "VIUDO",  texto: "Viudo/a" }
           ] },
-        { name: "fecha_nacimiento",     etiqueta: "Fecha de nacimiento", tipo: "date" },
+        { name: "fecha_nacimiento", etiqueta: "Fecha de nacimiento", tipo: "date",
+        min: fechaMin, max: fechaMax, mensaje: "La edad debe estar entre 18 y 65 años" },
         { name: "estado_empleado",      etiqueta: "Estado", defecto: "ACTIVO",
           opciones: [{ valor: "ACTIVO", texto: "Activo" }, { valor: "INACTIVO", texto: "Inactivo" }] }
     ]
