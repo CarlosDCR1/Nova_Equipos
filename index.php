@@ -15,7 +15,7 @@
 <div class="app-shell">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-mark"></div>
+            <div class="brand-mark" id="brandLogo" role="button" tabindex="0" aria-label="Logo Nova Equipos"></div>
         </div>
 
         <nav class="nav-group">
