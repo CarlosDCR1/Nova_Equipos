@@ -1,3 +1,11 @@
+
+
+const hoy2 = new Date();
+const fmt2 = (d) => d.toLocaleDateString("en-CA"); 
+
+const fechaMax2 = fmt2(new Date(hoy2.getFullYear() - 18, hoy2.getMonth(), hoy2.getDate()));
+const fechaMin2 = fmt2(new Date(hoy2.getFullYear() - 66, hoy2.getMonth(), hoy2.getDate() + 1));
+
 window.Modulos = window.Modulos || {};
 
 window.Modulos.estudiantes = Crud.crear({
@@ -32,7 +40,7 @@ window.Modulos.estudiantes = Crud.crear({
         { campo: "apellidos_estudiante", titulo: "Apellidos" },
         { campo: "carnet_estudiante", titulo: "Carnet" },
         { campo: "numero_estudiante", titulo: "Número" },
-        { campo: "correo_institucional", titulo: "Correo institucional" },
+        { campo: "correo_institucional", titulo: "Correo institucional", required: true },
         { campo: "estado_estudiante", titulo: "Estado", formato: Crud.badge },
         { campo: "fecha_creacion",titulo: "Creado" }
     ],
@@ -43,7 +51,8 @@ window.Modulos.estudiantes = Crud.crear({
         { name: "apellidos_estudiante", etiqueta: "Apellidos", maxlength: 100 },
         { name: "carnet_estudiante", etiqueta: "Carnet", maxlength: 30, required: true },
         { name: "numero_estudiante",  etiqueta: "Número", maxlength: 8, required: true },
-        { name: "correo_institucional", etiqueta: "Correo institucional", tipo: "email", maxlength: 150, required: true },
+        { name: "fecha_nacimiento", etiqueta: "Fecha de nacimiento", tipo: "date",
+        min: fechaMin2, max: fechaMax2, mensaje: "La edad debe estar entre 18 y 65 años" },
         { name: "estado_estudiante", etiqueta: "Estado", defecto: "ACTIVO",
           opciones: [{ valor: "ACTIVO", texto: "Activo" }, { valor: "INACTIVO", texto: "Inactivo" }] }
     ]

@@ -1,7 +1,9 @@
 <?php
+
 require_once("../core/Connection.php");
-require_once("../models/Estudiante.php");
 require_once("../core/Response.php");
+require_once("../core/Validar.php");
+require_once("../models/Estudiante.php");
 
 $conection = new Connection();
 $response = new Response();
@@ -26,12 +28,18 @@ switch ($method) {
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
 
+        Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 1005);
+        Validar::estructuraCarnet($input['carnet'] ?? '', 1007);
+        Validar::estructuratelefono($input['telefono'] ?? '', 1006);
+        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1008);
+
         try {
             $estudiante = new Estudiante($conection, $response);
             $estudiante->add($input);
 
         } catch (\Throwable $th) {
-            $response->error("Error al agregar el estudiante", 1002, 400);
+            $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al agregar el estudiante", $dup ? 1008 : 1002, $dup ? 409 : 400);
         }
         break;
 
@@ -40,6 +48,12 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
 
+        Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 1005);
+        Validar::estructuraCarnet($input['carnet'] ?? '', 1007);
+        Validar::estructuratelefono($input['telefono'] ?? '', 1006);
+        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1008);
+    
+
         try {
             $estudiante = new Estudiante($conection, $response);
             $estudiante->editar($id, $input);
@@ -47,7 +61,8 @@ switch ($method) {
             $response->success("Estudiante actualizado correctamente", [], 1);
 
         } catch (\Throwable $th) {
-            $response->error("Error al actualizar el estudiante", 1003, 400);
+            $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al actualizar el estudiante", $dup ? 1008 : 1002, $dup ? 409 : 400);
         }
         break;
 
@@ -57,7 +72,7 @@ switch ($method) {
         $id = (int) ($input['id'] ?? 0);
 
         try {
-            $estudiante = new Empleado($conection, $response);
+            $estudiante = new Estudiante($conection, $response);
             $estudiante->eliminar($id);
 
             $response->success("Estudiante eliminado correctamente", [], 1);
