@@ -21,8 +21,6 @@
         <nav class="nav-group">
             <div class="nav-group-title">Académico y personal</div>
             <ul class="nav-list">
-                <li><a class="nav-link" href="#jornada">Jornada</a></li>
-                <li><a class="nav-link" href="#facultad">Facultad</a></li>
                 <li><a class="nav-link" href="#carrera">Carrera</a></li>
                 <li><a class="nav-link" href="#estudiantes">Estudiante</a></li>
                 <li><a class="nav-link" href="#empleados">Empleado</a></li>
@@ -32,7 +30,6 @@
         <nav class="nav-group">
             <div class="nav-group-title">Seguridad</div>
             <ul class="nav-list">
-                <li><a class="nav-link" href="#tblrol">Rol</a></li>
                 <li><a class="nav-link" href="#tblmodulo">Módulo</a></li>
                 <li><a class="nav-link" href="#tblaplicacion">Aplicación</a></li>
                 <li><a class="nav-link" href="#usuarios">Usuario</a></li>

@@ -2,6 +2,8 @@
 require_once("../core/Connection.php");
 require_once("../models/Empleado.php");
 require_once("../core/Response.php");
+require_once("../core/Validar.php");
+
 
 $conection = new Connection();
 $response = new Response();
@@ -28,13 +30,18 @@ switch ($method) {
 
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
+        
+        Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 3005);
+        Validar::estructuratelefono($input['telefono_empleado'] ?? '', 3006);
+        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 3007);
 
         try {
             $empleado = new Empleado($conection, $response);
             $empleado->add($input);
 
         } catch (\Throwable $th) {
-            $response->error("Error al agregar el empleado", 3002, 400);
+           $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al agregar el empleado", $dup ? 1008 : 1002, $dup ? 409 : 400);
         }
         break;
 
@@ -43,6 +50,10 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
 
+        Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 3005);
+        Validar::estructuratelefono($input['telefono_empleado'] ?? '', 3006);
+        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 3007);
+
         try {
             $empleado = new Empleado($conection, $response);
             $empleado->editar($id, $input);
@@ -50,7 +61,8 @@ switch ($method) {
             $response->success("Empleado actualizado correctamente", [], 1);
 
         } catch (\Throwable $th) {
-            $response->error("Error al actualizar el empleado", 3003, 400);
+            $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al actualizar el empleado", $dup ? 1008 : 3002, $dup ? 409 : 400);
         }
         break;
 
