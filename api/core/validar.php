@@ -23,6 +23,45 @@ class Validar
         return (bool) preg_match('/^\p{L}+(?: \p{L}+)*$/u', trim((string) $texto));
     } 
 
+    static function usuario(mixed $texto): bool
+    {
+        return (bool) preg_match('/^[A-Za-z0-9._\-]{4,50}$/', trim((string) $texto));
+    }
+
+    static function contrasena(mixed $texto): bool
+    {
+        $t = (string) $texto;
+        return strlen($t) >= 8 && strlen($t) <= 72 && preg_match('/[A-Za-z]/', $t) && preg_match('/\d/', $t);
+    }
+
+    static function idPositivo(mixed $valor): bool
+    {
+        return filter_var($valor, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) !== false;
+    }
+
+    static function estructuraUsuario(mixed $texto, int $code): void
+    {
+        if (!self::usuario($texto)) {
+            Response::error("El usuario debe tener un minimo de 4 caracteres", $code, 400);
+        }
+    }
+
+    static function estructuraContrasena(mixed $texto, int $code): void
+    {
+        if (!self::contrasena($texto)) {
+            Response::error("La contraseña debe tener un minimo de 8 caracteres, con letra y número", $code, 400);
+        }
+    }
+
+    static function estructuraId(mixed $valor, string $campo, int $code): void
+    {
+        if (!self::idPositivo($valor)) {
+            Response::error("Selecciona $campo", $code, 400);
+        }
+    }
+
+
+
     static function estructuraCorreoumg(mixed $correo, int $code): void
     {
         if (!self::correoMiumg($correo)) {
@@ -89,6 +128,11 @@ class Validar
         'uq_estudiante_telefono'=> "El número ya está registrado",
         'uq_empleado_dpi'=> "El DPI ya está registrado",
         'uq_empleado_correo'=> "El correo ya está registrado",
+
+        'uqNombreModulo'       => "Ya existe un módulo con ese nombre",
+        'uqAplicacionModulo'   => "Ya existe una aplicación con ese nombre en el módulo",
+        'uqUsuarioUsuario'     => "El nombre de usuario ya está registrado",
+        'uqIdEmpleadoUsuario'  => "Ese empleado ya tiene un usuario",
     ];
 
     foreach ($mensajes as $llave => $texto) {

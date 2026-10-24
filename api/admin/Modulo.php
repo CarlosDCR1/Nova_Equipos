@@ -25,12 +25,18 @@ switch ($method) {
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
 
+        Validar::estructuraSoloLetras($input['nombreModulo']??'',6005);
+        if (trim($input['nombreModulo'] ?? '') === '') {
+            $response->error("El nombre del modulo es obligatorio", 7005, 400);
+        }
+
         try {
             $modulo = new Modulo($conection, $response);
             $modulo->add($input);
 
         } catch (\Throwable $th) {
-            $response->error("Error al agregar el módulo (¿el nombre del módulo ya existe?)", 5002, 400);
+           $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al agregar el Modulo", $dup ? 7006 : 7002, $dup ? 409 : 400);
         }
         break;
 
@@ -39,12 +45,17 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
 
+        if (trim($input['nombreModulo'] ?? '') === '') {
+            $response->error("El nombre del modulo es obligatorio", 7005, 400);
+        }
+
         try {
             $modulo = new Modulo($conection, $response);
             $modulo->editar($id, $input);
 
         } catch (\Throwable $th) {
-            $response->error("Error al actualizar el módulo (¿el nombre del módulo ya existe?)", 5003, 400);
+            $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al actualizar el modulo", $dup ? 7006 : 7003, $dup ? 409 : 400);
         }
         break;
 

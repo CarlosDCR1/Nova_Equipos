@@ -2,6 +2,7 @@
 require_once("../core/Connection.php");
 require_once("../models/Aplicacion.php");
 require_once("../core/Response.php");
+require_once("../core/Validar.php");
 
 $conection = new Connection();
 $response = new Response();
@@ -25,12 +26,18 @@ switch ($method) {
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
 
+        Validar::estructuraSoloLetras($input['nombreAplicacion']??'',6005);
+        if (trim($input['nombreAplicacion'] ?? '') === '') {
+            $response->error("El nombre de la Aplicacion es obligatorio", 7005, 400);
+        }
+
         try {
             $aplicacion = new Aplicacion($conection, $response);
             $aplicacion->add($input);
 
         } catch (\Throwable $th) {
-            $response->error("Error al agregar la aplicación (¿ya existe ese nombre en el módulo?)", 6002, 400);
+            $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al agregar la Aplicacion", $dup ? 7006 : 7002, $dup ? 409 : 400);
         }
         break;
 
@@ -39,12 +46,17 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
 
+        if (trim($input['nombreAplicacion'] ?? '') === '') {
+            $response->error("El nombre de la aplicacion es obligatorio", 7005, 400);
+        }
+
         try {
             $aplicacion = new Aplicacion($conection, $response);
             $aplicacion->editar($id, $input);
 
         } catch (\Throwable $th) {
-            $response->error("Error al actualizar la aplicación (¿ya existe ese nombre en el módulo?)", 6003, 400);
+            $dup = Validar::mensajeDuplicado($th);
+            $response->error($dup ?? "Error al actualizar la Aplicacion", $dup ? 7006 : 7003, $dup ? 409 : 400);
         }
         break;
 
