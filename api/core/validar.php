@@ -18,6 +18,11 @@ class Validar
         return (bool) preg_match('/^\d{4}-\d{2}-\d{4}$/', trim((string) $carnet));
     }
 
+    static function soloLetras(mixed $texto): bool
+    {
+        return (bool) preg_match('/^\p{L}+(?: \p{L}+)*$/u', trim((string) $texto));
+    } 
+
     static function estructuraCorreoumg(mixed $correo, int $code): void
     {
         if (!self::correoMiumg($correo)) {
@@ -38,6 +43,13 @@ class Validar
             Response::error("El carnet debe tener el formato XXXX-XX-XXXX", $code, 400);
         }
     }
+
+    static function estructuraSoloLetras(mixed $texto, int $code): void
+    {
+        if (!self::soloLetras($texto)) {
+            Response::error("Solo se permiten letras", $code, 400);
+        }
+    }   
 
     static function edadEntre(mixed $fecha, int $min = 18, int $max = 65): bool
     {
