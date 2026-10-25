@@ -3,7 +3,8 @@ require_once("Env.php");
 Env::load(__DIR__ . "/.env.example");
 
 #   SECURITY & SESSIONS
-ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_secure', (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? '1' : '0');
+//ini_set('session.cookie_secure', '1');
 ini_set('session.cookie_httponly', '1');
 ini_set('session.cookie_samesite', 'Strict');
 

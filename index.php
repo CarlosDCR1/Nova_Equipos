@@ -1,4 +1,6 @@
 <?php
+require_once "api/core/Sesion.php";
+Sesion::requerirPagina();
 
 ?>
 <!DOCTYPE html>
@@ -76,6 +78,9 @@
         <header class="topbar">
             <button class="topbar-menu-btn" id="menuBtn" aria-label="Abrir menú">☰</button>
             <span class="topbar-badge">Nova Equipos Sistemas</span>
+            <span class="usuario-sesion">
+                <?= htmlspecialchars($_SESSION['nombreEmpleado']) ?> · <a href="logout.php">Cerrar sesión</a>
+            </span>
         </header>
 
         <main class="page-content" id="contenido">

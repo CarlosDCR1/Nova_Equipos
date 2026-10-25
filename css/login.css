@@ -1,0 +1,63 @@
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #7fb6edb9;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #ffff;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 440px;
+    margin: 16px;
+    padding: 36px 40px;
+   background: url("../Resources/azul.png") center / cover no-repeat;
+    
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+.login-card h1 {
+    margin: 0 0 18px;
+    padding-bottom: 14px;
+    text-align: center;
+    font-size: 1.6rem;
+    border-bottom: 3px solid #ffff;
+}
+
+.subtitulo { text-align: center; color: #ffff; margin-bottom: 18px; }
+
+label { display: block; margin: 14px 0 6px; font-weight: 600; color: #ffff; }
+
+input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d5dbe1;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+input:focus { outline: none; border-color: #0d7bff; box-shadow: 0 0 0 3px rgba(13, 123, 255, 0.2); }
+
+.check { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 400; }
+
+.mensaje { min-height: 1.3em; margin: 14px 0 0; color: #c62828; font-weight: 600; }
+
+button {
+    margin-top: 12px;
+    padding: 12px 28px;
+    border: 0;
+    border-radius: 8px;
+    background: #3c8ced;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+button:disabled { opacity: 0.6; cursor: wait; }

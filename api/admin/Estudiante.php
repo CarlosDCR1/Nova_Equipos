@@ -4,6 +4,8 @@ require_once("../core/Connection.php");
 require_once("../core/Response.php");
 require_once("../core/Validar.php");
 require_once("../models/Estudiante.php");
+require_once("../core/Sesion.php");
+Sesion::requerirApi();
 
 $conection = new Connection();
 $response = new Response();

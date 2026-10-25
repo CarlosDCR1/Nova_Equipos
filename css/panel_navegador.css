@@ -204,3 +204,6 @@ a { text-decoration: none; color: inherit; }
   .topbar-menu-btn { display: block; }
   .page-content { padding: 1.4rem 1rem; }
 }
+.usuario-sesion { margin-left: auto; font-size: 0.9rem; white-space: nowrap; }
+.usuario-sesion a { color: #0d7bff; font-weight: 600; text-decoration: none; }
+.usuario-sesion a:hover { text-decoration: underline; }
