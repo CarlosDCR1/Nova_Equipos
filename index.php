@@ -20,6 +20,7 @@ Sesion::requerirPagina();
             <div class="brand-mark" id="brandLogo" role="button" tabindex="0" aria-label="Logo Nova Equipos"></div>
         </div>
 
+        <?php if (Sesion::puedeVerModulo('Academico y personal')): ?>
         <nav class="nav-group">
             <div class="nav-group-title">Académico y personal</div>
             <ul class="nav-list">
@@ -28,7 +29,9 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#empleados">Empleado</a></li>
             </ul>
         </nav>
+        <?php endif; ?>
 
+        <?php if (Sesion::puedeVerModulo('Seguridad')): ?>
         <nav class="nav-group">
             <div class="nav-group-title">Seguridad</div>
             <ul class="nav-list">
@@ -41,7 +44,9 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#tblbitacora">Bitácora</a></li>
             </ul>
         </nav>
+        <?php endif; ?>
 
+        <?php if (Sesion::puedeVerModulo('Inventario')): ?>
         <nav class="nav-group">
             <div class="nav-group-title">Inventario</div>
             <ul class="nav-list">
@@ -54,7 +59,9 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#movimiento_inventario">Movimiento de inventario</a></li>
             </ul>
         </nav>
+        <?php endif; ?>
 
+        <?php if (Sesion::puedeVerModulo('Prestamos')): ?>
         <nav class="nav-group">
             <div class="nav-group-title">Préstamos</div>
             <ul class="nav-list">
@@ -63,7 +70,9 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#detalle_prestamo">Detalle de préstamo</a></li>
             </ul>
         </nav>
+        <?php endif; ?>
 
+        <?php if (Sesion::puedeVerModulo('Devoluciones')): ?>
         <nav class="nav-group">
             <div class="nav-group-title">Devoluciones</div>
             <ul class="nav-list">
@@ -72,6 +81,7 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#detalle_devolucion">Detalle de devolución</a></li>
             </ul>
         </nav>
+        <?php endif; ?>
     </aside>
 
     <div class="main-area">
@@ -79,7 +89,7 @@ Sesion::requerirPagina();
             <button class="topbar-menu-btn" id="menuBtn" aria-label="Abrir menú">☰</button>
             <span class="topbar-badge">Nova Equipos Sistemas</span>
             <span class="usuario-sesion">
-                <?= htmlspecialchars($_SESSION['nombreEmpleado']) ?> · <a href="logout.php">Cerrar sesión</a>
+                <?= htmlspecialchars($_SESSION['nombreMostrar'] ?? '') ?> · <a href="logout.php">Cerrar sesión</a>
             </span>
         </header>
 

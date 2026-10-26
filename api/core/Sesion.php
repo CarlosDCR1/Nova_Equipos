@@ -4,8 +4,8 @@ require_once(__DIR__ . "/Response.php");
 
 class Sesion
 {
-    //Para que se cierre la sesion cuando se pasa 30 minutos sin actividad 
-    const INACTIVIDAD = 1300;
+    // 30 minutos sin actividad (en segundos)
+    const INACTIVIDAD = 1800;
 
     static function activa(): bool
     {
@@ -29,7 +29,7 @@ class Sesion
         }
     }
 
-    // para los endpoints api/admin/*: si no hay sesión, responde 401
+    // para los endpoints del controlador si no hay sesión, responde 401
     static function requerirApi(): void
     {
         if (!self::activa()) {
@@ -43,6 +43,38 @@ class Sesion
         if (self::activa()) {
             header("Location: index.php");
             exit;
+        }
+    }
+
+    // ---------- PERMISOS ----------
+
+    static function esEstudiante(): bool
+    {
+        return ($_SESSION['tipoUsuario'] ?? '') === 'estudiante';
+    }
+
+    // para mostrar o ocultar el grupo del menú si tiene permisos a algunas de esas aplicaciones 
+    static function puedeVerModulo(string $modulo): bool
+    {
+        return !empty($_SESSION['permisos'][$modulo]);
+    }
+
+    // aqui gestione los derechos por botones del CRUD aparecen o desparecen segun el nivel de permiso
+    static function puede(string $modulo, string $aplicacion, string $derecho = 'ver'): bool
+    {
+        $p = $_SESSION['permisos'][$modulo][$aplicacion] ?? null;
+        if ($p === null) {
+            return false;
+        }
+        return $derecho === 'ver' ? true : !empty($p[$derecho]);
+    }
+
+    // para los endpoints de la capa controladora 401 si no hay sesión, 403 si no tiene el permiso
+    static function requerirPermiso(string $modulo, string $aplicacion, string $derecho = 'ver'): void
+    {
+        self::requerirApi();
+        if (!self::puede($modulo, $aplicacion, $derecho)) {
+            Response::error("No tienes permiso para realizar esta acción", 403, 403);
         }
     }
 

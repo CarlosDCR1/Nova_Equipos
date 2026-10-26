@@ -20,6 +20,16 @@ function fechaValida(mixed $fecha): bool
     return $f && $f->format('Y-m-d') === $texto;
 }
 
+// el mapa de permisos para el crud 
+
+$derechos = [
+    'GET'    => 'ver',
+    'POST'   => 'insertar',
+    'PUT'    => 'editar',
+    'DELETE' => 'eliminar',
+];
+Sesion::requerirPermiso('Inventario', 'Inventario_Equipo', $derechos[$method] ?? 'ver');
+
 switch ($method) {
 
     case 'GET':

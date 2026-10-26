@@ -10,6 +10,14 @@ $conection = new Connection();
 $response = new Response();
 $method = $_SERVER['REQUEST_METHOD'];
 
+$derechos = [
+    'GET'    => 'ver',
+    'POST'   => 'insertar',
+    'PUT'    => 'editar',
+    'DELETE' => 'eliminar',
+];
+Sesion::requerirPermiso('Prestamos', 'Estado_Prestamo', $derechos[$method] ?? 'ver');
+
 switch ($method) {
  
     case 'GET':

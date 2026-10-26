@@ -10,6 +10,15 @@ $conection = new Connection();
 $response = new Response();
 $method = $_SERVER['REQUEST_METHOD'];
 
+// el mapa de permisos para el crud 
+$derechos = [
+    'GET'    => 'ver',
+    'POST'   => 'insertar',
+    'PUT'    => 'editar',
+    'DELETE' => 'eliminar',
+];
+Sesion::requerirPermiso('Seguridad', 'Aplicacion', $derechos[$method] ?? 'ver');
+
 switch ($method) {
 
     case 'GET':

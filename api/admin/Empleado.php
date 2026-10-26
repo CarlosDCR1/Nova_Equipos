@@ -3,13 +3,22 @@ require_once("../core/Connection.php");
 require_once("../models/Empleado.php");
 require_once("../core/Response.php");
 require_once("../core/Validar.php");
-//require_once("../core/Sesion.php");
-//Sesion::requerirApi();
+require_once("../core/Sesion.php");
+Sesion::requerirApi();
 
 
 $conection = new Connection();
 $response = new Response();
 $method = $_SERVER['REQUEST_METHOD'];
+
+// el mapa de permisos para el crud 
+$derechos = [
+    'GET'    => 'ver',
+    'POST'   => 'insertar',
+    'PUT'    => 'editar',
+    'DELETE' => 'eliminar',
+];
+Sesion::requerirPermiso('Academico y personal', 'Empleado', $derechos[$method] ?? 'ver');
 
 switch ($method) {
 

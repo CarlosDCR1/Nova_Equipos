@@ -16,11 +16,20 @@ class Auth
 
     public function login(string $usuario, string $contrasena)
     {
+        // El usuario puede ser empleado O estudiante por eso referenciamos los dos id pero uno siempre queda null no puede ser los 2
         $statement = $this->connection->prepare(
-            "SELECT u.idUsuario, u.nombreUsuario, u.contrasenaUsuario, u.is_active,
+            "SELECT u.idUsuario, u.idEmpleado, u.idEstudiante, u.nombreUsuario, u.contrasenaUsuario, u.is_active,
                     (u.fechaBloqueoUsuario IS NOT NULL AND u.fechaBloqueoUsuario > NOW()) AS bloqueado,
-                    e.nombre, e.apellidos, e.estado_empleado
-             FROM tblusuario u INNER JOIN empleado e ON u.idEmpleado = e.id_empleado
+                    CASE WHEN u.idEmpleado IS NOT NULL
+                         THEN CONCAT(e.nombre, ' ', COALESCE(e.apellidos, ''))
+                         ELSE CONCAT(s.nombre_estudiante, ' ', COALESCE(s.apellidos_estudiante, ''))
+                    END AS nombreMostrar,
+                    CASE WHEN u.idEmpleado IS NOT NULL THEN e.estado_empleado
+                         ELSE s.estado_estudiante
+                    END AS estadoPersona
+             FROM tblusuario u
+             LEFT JOIN empleado   e ON u.idEmpleado   = e.id_empleado
+             LEFT JOIN estudiante s ON u.idEstudiante = s.id_estudiante
              WHERE u.nombreUsuario = :usuario");
         $statement->execute([':usuario' => $usuario]);
         $u = $statement->fetch(PDO::FETCH_ASSOC);
@@ -43,36 +52,83 @@ class Auth
             $this->response->error("Usuario o contraseña incorrectos", 7002, 401);
         }
 
-        // Si el usuario ingresa correctamente la contraseña pero el usuario inactivo
-        if (!$u['is_active'] || $u['estado_empleado'] !== 'ACTIVO') {
-            $this->registrarIntento($u['idUsuario'], $usuario, 0, "Usuario o empleado inactivo");
+        // Si el usuario ingresa correctamente la contraseña pero el usuario está inactivo
+        if (!$u['is_active'] || $u['estadoPersona'] !== 'ACTIVO') {
+            $this->registrarIntento($u['idUsuario'], $usuario, 0, "Usuario, empleado o estudiante inactivo");
             $this->response->error("El usuario está inactivo. Contacte al administrador", 7003, 403);
         }
 
-        // Si el usuario ingresa todo correctamente 
+        // Roles y permisos por modulo y aplicacion 
+        $roles = $this->cargarRoles((int) $u['idUsuario']);
+        $permisos = $this->cargarPermisos((int) $u['idUsuario']);
+
+        // Sin roles o sin permisos no tiene nada que ver en el sistema
+        if (empty($roles) || empty($permisos)) {
+            $this->registrarIntento($u['idUsuario'], $usuario, 0, "Usuario sin roles o permisos asignados");
+            $this->response->error("El usuario no tiene permisos asignados. Contacte al administrador", 7006, 403);
+        }
+
+        // Si el usuario ingresa todo correctamente
         $this->connection->prepare(
             "UPDATE tblusuario SET intentosFallidosUsuario = 0, fechaBloqueoUsuario = NULL, ultimoAccesoUsuario = NOW()
              WHERE idUsuario = :id")->execute([':id' => $u['idUsuario']]);
 
-        $statement = $this->connection->prepare(
-            "SELECT r.idRol, r.nombreRol FROM tblusuariorol ur
-             INNER JOIN tblrol r ON ur.idRol = r.idRol
-             WHERE ur.idUsuario = :id AND r.is_active = 1");
-        $statement->execute([':id' => $u['idUsuario']]);
-        $roles = $statement->fetchAll(PDO::FETCH_ASSOC);
-
-        // Con esto evitamos que la sesion se quede fija
-        session_regenerate_id(true); 
+        session_regenerate_id(true);
         $_SESSION['idUsuario'] = (int) $u['idUsuario'];
         $_SESSION['nombreUsuario'] = $u['nombreUsuario'];
-        $_SESSION['nombreEmpleado'] = trim($u['nombre'] . ' ' . ($u['apellidos'] ?? ''));
-        $_SESSION['roles'] = $roles;
-        $_SESSION['ultimaActividad'] = time();
+        $_SESSION['tipoUsuario'] = $u['idEmpleado'] !== null ?'empleado' : 'estudiante';
+        $_SESSION['idEmpleado']  = $u['idEmpleado'] !== null ?(int) $u['idEmpleado']: null;
+        $_SESSION['idEstudiante'] = $u['idEstudiante']!== null ?(int) $u['idEstudiante']: null;
+        $_SESSION['nombreMostrar'] = trim($u['nombreMostrar']);
+        $_SESSION['roles']= $roles;
+        $_SESSION['permisos']= $permisos;
+        $_SESSION['ultimaActividad']= time();
 
         $this->registrarIntento($u['idUsuario'], $usuario, 1, "Acceso correcto");
         $this->registrarBitacora((int) $u['idUsuario'], "Inicio de sesión");
 
         $this->response->success("Bienvenido", ['redirect' => 'index.php'], 1);
+    }
+
+    private function cargarRoles(int $idUsuario): array
+    {
+        $statement = $this->connection->prepare(
+            "SELECT r.idRol, r.nombreRol FROM tblusuariorol ur
+             INNER JOIN tblrol r ON ur.idRol = r.idRol
+             WHERE ur.idUsuario = :id AND r.is_active = 1");
+        $statement->execute([':id' => $idUsuario]);
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    
+    // aqui vamos a gestionar Si el usuario tiene varios roles se queda con el derecho más alto priorizandolo con el max
+    private function cargarPermisos(int $idUsuario): array
+    {
+        $statement = $this->connection->prepare(
+            "SELECT m.nombreModulo, a.nombreAplicacion,
+                    MAX(rma.derInsertarRolModuloAplicacion) AS ins,
+                    MAX(rma.derEditarRolModuloAplicacion)   AS edi,
+                    MAX(rma.derEliminarRolModuloAplicacion) AS del,
+                    MAX(rma.derImprimirRolModuloAplicacion) AS imp
+             FROM tblusuariorol ur
+             INNER JOIN tblrol r ON r.idRol = ur.idRol AND r.is_active = 1
+             INNER JOIN tblrolmoduloaplicacion rma ON rma.idRol = ur.idRol
+             INNER JOIN tblmodulo m ON m.idModulo = rma.idModulo AND m.is_active = 1
+             INNER JOIN tblaplicacion a ON a.idAplicacion = rma.idAplicacion AND a.is_active = 1
+             WHERE ur.idUsuario = :id
+             GROUP BY m.nombreModulo, a.nombreAplicacion");
+        $statement->execute([':id' => $idUsuario]);
+
+        $permisos = [];
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $f) {
+            $permisos[$f['nombreModulo']][$f['nombreAplicacion']] = [
+                'insertar' => (bool) $f['ins'],
+                'editar'   => (bool) $f['edi'],
+                'eliminar' => (bool) $f['del'],
+                'imprimir' => (bool) $f['imp'],
+            ];
+        }
+        return $permisos;
     }
 
     private function registrarFallo(int $idUsuario, string $usuario)

@@ -6,7 +6,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #7fb6edb9;
+    background: url("../Resources/fondolabblanco.png") center / cover no-repeat;
     font-family: "Segoe UI", Arial, sans-serif;
     color: #ffff;
 }
