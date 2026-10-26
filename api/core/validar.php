@@ -128,6 +128,9 @@ class Validar
         'uq_estudiante_telefono'=> "El número ya está registrado",
         'uq_empleado_dpi'=> "El DPI ya está registrado",
         'uq_empleado_correo'=> "El correo ya está registrado",
+        'uq_modelo_marca' => "Ese modelo ya existe para la marca seleccionada",
+        'uq_equipo_codigo' => "El código de inventario ya está registrado",
+        'uq_equipo_serie'  => "El número de serie ya está registrado",
 
         'uqNombreModulo'       => "Ya existe un módulo con ese nombre",
         'uqAplicacionModulo'   => "Ya existe una aplicación con ese nombre en el módulo",
