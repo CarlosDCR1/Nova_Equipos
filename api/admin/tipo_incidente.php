@@ -18,7 +18,7 @@ $derechos = [
     'PUT'    => 'editar',
     'DELETE' => 'eliminar',
 ];
-Sesion::requerirPermiso('Devoluciones', 'Tipo_Incidente', $derechos[$method] ?? 'ver');
+Sesion::requerirPermiso('Devoluciones', 'Tipo de incidente', $derechos[$method] ?? 'ver');
 
 switch ($method) {
 

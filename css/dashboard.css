@@ -1,0 +1,66 @@
+.inicio {
+    --azul-nova: #1E3A8A;
+    --azul-electrico: #2563EB;
+    --cian: #22D3EE;
+    --hielo: #F4F7FE;
+    --azul-escarcha: #DBE7FF;
+
+    --disponible: #10B981;
+    --prestado: #F59E0B;
+    --mantenimiento: #8B5CF6;
+    --alerta: #EF4444;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    background-color: var(--hielo);
+    background-image: url("../Resources/fondoDashboard.png");
+    background-size: cover;
+    background-position: center;
+}
+
+.inicio-titulo { margin: 0; font-size: 1.5rem; color: var(--azul-nova); }
+.inicio-subtitulo { margin: 0; color: #475569; }
+.inicio-seccion { margin: 0; font-size: 1.05rem; color: var(--azul-nova); }
+
+.inicio-titulo, .inicio-subtitulo, .inicio-seccion {
+    background: rgba(255, 255, 255, .9);
+    padding: 8px 14px;
+    border-radius: 8px;
+    width: fit-content;
+}
+
+.inicio-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.inicio-tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 4px;
+    color: #fff;
+    background: var(--azul-nova);
+    
+}
+.inicio-tarjeta-titulo { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+.inicio-tarjeta-numero { font-size: 2rem; line-height: 1.1; }
+.inicio-tarjeta-nota { font-size: .8rem; opacity: .9; }
+
+.inicio-tarjeta.disponible { background: var(--disponible); }
+.inicio-tarjeta.prestado { background: var(--prestado); }
+.inicio-tarjeta.mantenimiento { background: var(--mantenimiento); }
+.inicio-tarjeta.alerta { background: var(--alerta); }
+.inicio-tarjeta.azul { background: var(--azul-electrico); }
+.inicio-tarjeta.cian { background: var(--cian); color: #0b2545; }
+
+.inicio-tabla-caja { overflow-x: auto; background: #fff; border-radius: 10px; }
+.inicio-tabla { width: 100%; border-collapse: collapse; }
+.inicio-tabla th, .inicio-tabla td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--azul-escarcha); }
+.inicio-tabla th { color: var(--azul-nova); font-size: .8rem; text-transform: uppercase; }
+.inicio-tabla .num { text-align: right; }
