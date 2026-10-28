@@ -2,7 +2,6 @@ const contenido = document.getElementById("contenido");
 const sidebar = document.getElementById("sidebar");
 const enlaces = sidebar.querySelectorAll(".nav-link");
 const brandLogo = document.getElementById('brandLogo');
-// menu para un boton
 const menuBtn = document.getElementById("menuBtn");
 const mqMovil = window.matchMedia("(max-width: 960px)");
 
@@ -42,7 +41,6 @@ function alternarMenu() {
     }
 }
 
-// Recordar el estado entre recargas
     try {
         if (localStorage.getItem("sidebarMini") === "1") sidebar.classList.add("mini");
     } catch {}
@@ -73,8 +71,7 @@ function marcarActivo(nombre) {
 }
 
 async function navegar() {
-    const nombre = location.hash.slice(1);
-    if (!nombre) return;
+    const nombre = location.hash.slice(1) || "inicio";
 
     marcarActivo(nombre);
     contenido.innerHTML = `<p class="empty-state">Cargando...</p>`;

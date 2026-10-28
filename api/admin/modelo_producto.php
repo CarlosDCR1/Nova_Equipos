@@ -18,7 +18,7 @@ $derechos = [
     'PUT'    => 'editar',
     'DELETE' => 'eliminar',
 ];
-Sesion::requerirPermiso('Inventario', 'Modelo_Producto', $derechos[$method] ?? 'ver');
+Sesion::requerirPermiso('Inventario', 'Modelo de producto', $derechos[$method] ?? 'ver');
 
 switch ($method) {
 

@@ -11,6 +11,7 @@ Sesion::requerirPagina();
     <title>Nova Equipos</title>
     <link rel="stylesheet" href="css/panel_navegador.css?v=<?= filemtime('css/panel_navegador.css') ?>">
     <link rel="stylesheet" href="css/cruds.css?v=<?= filemtime('css/cruds.css') ?>">
+    <link rel="stylesheet" href="css/dashboard.css?v=<?= filemtime('css/dashboard.css') ?>">
 </head>
 <body>
 
@@ -38,8 +39,6 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#tblmodulo">Módulo</a></li>
                 <li><a class="nav-link" href="#tblaplicacion">Aplicación</a></li>
                 <li><a class="nav-link" href="#usuarios">Usuario</a></li>
-                <li><a class="nav-link" href="#tblusuariorol">Usuario - Rol</a></li>
-                <li><a class="nav-link" href="#tblrolmoduloaplicacion">Rol - Módulo - Aplicación</a></li>
                 <li><a class="nav-link" href="#tblintentologin">Intentos de login</a></li>
                 <li><a class="nav-link" href="#tblbitacora">Bitácora</a></li>
             </ul>

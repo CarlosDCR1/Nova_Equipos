@@ -16,7 +16,7 @@ $derechos = [
     'PUT'    => 'editar',
     'DELETE' => 'eliminar',
 ];
-Sesion::requerirPermiso('Prestamos', 'Estado_Prestamo', $derechos[$method] ?? 'ver');
+Sesion::requerirPermiso('Prestamos', 'Estado de prestamo', $derechos[$method] ?? 'ver');
 
 switch ($method) {
  
