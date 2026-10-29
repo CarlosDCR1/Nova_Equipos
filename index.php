@@ -86,7 +86,8 @@ Sesion::requerirPagina();
     <div class="main-area">
         <header class="topbar">
             <button class="topbar-menu-btn" id="menuBtn" aria-label="Abrir menú">☰</button>
-            <span class="topbar-badge">Nova Equipos Sistemas</span>
+            <!--<span class="topbar-badge">Nova Equipos Sistemas</span> -->
+            <a href="#inicio"><img src="./Resources/pagina-de-inicio.ico" alt="Icono" width="30px"></a>
             <span class="usuario-sesion">
                 <?= htmlspecialchars($_SESSION['nombreMostrar'] ?? '') ?> · <a href="logout.php">Cerrar sesión</a>
             </span>
