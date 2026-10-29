@@ -40,9 +40,9 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
 
         Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 1005);
-        Validar::estructuraCarnet($input['carnet'] ?? '', 1007);
-        Validar::estructuratelefono($input['telefono'] ?? '', 1006);
-        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1008);
+        Validar::estructuraTelefono($input['numero_estudiante'] ?? '', 1006);
+        Validar::estructuraCarnet($input['carnet_estudiante'] ?? '', 1007);
+        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1009);   
 
         try {
             $estudiante = new Estudiante($conection, $response);
@@ -60,9 +60,9 @@ switch ($method) {
         $id = (int) ($input['id'] ?? 0);
 
         Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 1005);
-        Validar::estructuraCarnet($input['carnet'] ?? '', 1007);
-        Validar::estructuratelefono($input['telefono'] ?? '', 1006);
-        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1008);
+        Validar::estructuraTelefono($input['numero_estudiante'] ?? '', 1006);
+        Validar::estructuraCarnet($input['carnet_estudiante'] ?? '', 1007);
+        Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1009);   
     
 
         try {

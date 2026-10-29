@@ -23,7 +23,7 @@
 
         return `
             <h2 class="inicio-titulo">Equipos disponibles para ti</h2>
-            <p class="inicio-subtitulo">${esc(d.carrera)} · ${esc(d.total_disponibles)} equipos disponibles ahora</p>
+            <p class="inicio-subtitulo">${esc(d.carrera)} | ${esc(d.total_disponibles)} equipos disponibles ahora</p>
             <div class="inicio-tarjetas">${categorias}</div>`;
     }
 
@@ -52,7 +52,7 @@
         return `
             <h2 class="inicio-titulo">Resumen general</h2>
             <div class="inicio-tarjetas">${tarjetas}</div>
-            <h3 class="inicio-seccion">Stock por modelo </h3>
+            <h3 class="inicio-seccion">Stock por modelo</h3>
             <div class="inicio-tabla-caja">
               <table class="inicio-tabla">
                 <thead><tr><th>Modelo</th><th>Categoría</th><th class="num">Disponibles</th><th class="num">Total</th><th>Estado</th></tr></thead>

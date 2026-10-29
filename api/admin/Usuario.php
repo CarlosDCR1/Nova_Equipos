@@ -27,7 +27,7 @@ switch ($method) {
         $usuario = new Usuario($conection, $response);
         $filtros = [
             'idEmpleado' => $_GET['idEmpleado'] ?? null, 'nombre' => $_GET['nombre'] ?? null,
-            'is_active' => $_GET['is_active'] ?? null,
+            'is_active' => $_GET['is_active'] ?? null, 'tipo' => $_GET['tipo'] ?? null,
         ];
         $usuario->getAll($filtros);
     } catch (\Throwable $th) {
@@ -66,7 +66,6 @@ switch ($method) {
             $usuario = new Usuario($conection, $response);
             $usuario->editar($id, $input);
 
-            $response->success("Usuario actualizado correctamente", [], 1);
         } catch (\Throwable $th) {
             $dup = Validar::mensajeDuplicado($th);
             $response->error($dup ?? "Error al actualizar el usuario", $dup ? 4008 : 4003, $dup ? 409 : 400);
@@ -82,7 +81,6 @@ switch ($method) {
             $usuario = new Usuario($conection, $response);
             $usuario->eliminar($id);
 
-            $response->success("Usuario eliminado correctamente", [], 1);
         } catch (\Throwable $th) {
 
             $response->error("No se puede eliminar: el usuario tiene roles o registros de bitácora asociados", 4004, 400);

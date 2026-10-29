@@ -4,7 +4,6 @@ require_once(__DIR__ . "/Response.php");
 
 class Sesion
 {
-    // 30 minutos sin actividad (en segundos)
     const INACTIVIDAD = 1800;
 
     static function activa(): bool
@@ -20,7 +19,7 @@ class Sesion
         return true;
     }
 
-    // para las páginas si no hay sesión, manda al login
+   
     static function requerirPagina(): void
     {
         if (!self::activa()) {

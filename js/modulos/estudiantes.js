@@ -50,6 +50,7 @@ window.Modulos.estudiantes = Crud.crear({
         { name: "nombre_estudiante", etiqueta: "Nombre", maxlength: 100, required: true },
         { name: "apellidos_estudiante", etiqueta: "Apellidos", maxlength: 100 },
         { name: "carnet_estudiante", etiqueta: "Carnet", maxlength: 30, required: true },
+        { name: "correo_institucional", etiqueta: "Correo institucional", tipo: "email", maxlength: 150, required: true },
         { name: "numero_estudiante",  etiqueta: "Número", maxlength: 8, required: true },
         { name: "fecha_nacimiento", etiqueta: "Fecha de nacimiento", tipo: "date",
         min: fechaMin2, max: fechaMax2, mensaje: "La edad debe estar entre 18 y 65 años" },
