@@ -11,7 +11,6 @@ class Devolucion
         $this->response = $response;
     }
 
-    // lista para los prestamos
     public function listaPrestamos()
     {
         $query = "SELECT p.id_prestamo,
@@ -56,6 +55,7 @@ class Devolucion
             $params[':observaciones'] = "%{$filtros['observaciones']}%";
         }
 
+        // select completo o filtrado
         $where = $condiciones ? ("WHERE " . implode(" AND ", $condiciones)) : "";
         $query = "SELECT id_devolucion, id_prestamo, id_usuario, fecha_devolucion, observaciones
                   FROM devolucion $where ORDER BY id_devolucion DESC";
@@ -68,36 +68,20 @@ class Devolucion
     // PARA EL POST EN EL ADMIN
     public function add(array $d)
     {
-        $this->connection->beginTransaction();
-        try {
-            $statement = $this->connection->prepare(
-                "INSERT INTO devolucion (id_prestamo, id_usuario, observaciones)
-                 VALUES (:id_prestamo, :id_usuario, :observaciones)"
-            );
-            $statement->execute([
-                ':id_prestamo' => $d['id_prestamo'],
-                ':id_usuario' => $d['id_usuario'],
-                ':observaciones' => ($d['observaciones'] ?? '') !== '' ? $d['observaciones'] : null
-            ]);
-
-            $statement = $this->connection->prepare(
-                "UPDATE prestamo
-                 SET fecha_devolucion_real = (SELECT fecha_devolucion FROM devolucion WHERE id_prestamo = :id_dev)
-                 WHERE id_prestamo = :id_pre"
-            );
-            $statement->execute([':id_dev' => $d['id_prestamo'], ':id_pre' => $d['id_prestamo']]);
-
-            $this->connection->commit();
-        } catch (\Throwable $th) {
-            if ($this->connection->inTransaction()) {
-                $this->connection->rollBack();
-            }
-            throw $th;
-        }
+        $statement = $this->connection->prepare(
+            "INSERT INTO devolucion (id_prestamo, id_usuario, observaciones)
+             VALUES (:id_prestamo, :id_usuario, :observaciones)"
+        );
+        $statement->execute([
+            ':id_prestamo' => $d['id_prestamo'],
+            ':id_usuario' => $d['id_usuario'],
+            ':observaciones' => ($d['observaciones'] ?? '') !== '' ? $d['observaciones'] : null
+        ]);
         $this->response->success("Devolución registrada correctamente", [], 1);
     }
 
     // PARA EL PUT EN EL ADMIN
+
     public function editar(int $id, array $d)
     {
         $statement = $this->connection->prepare("SELECT id_prestamo FROM devolucion WHERE id_devolucion = :id");
@@ -128,30 +112,10 @@ class Devolucion
     }
 
     // DELETE EN EL ADMIN
-    // cuando elminamos la devolución la fecha del prestamos se queda sin aguardar 
     public function eliminar(int $id)
     {
-        $this->connection->beginTransaction();
-        try {
-            $statement = $this->connection->prepare("SELECT id_prestamo FROM devolucion WHERE id_devolucion = :id");
-            $statement->execute([':id' => $id]);
-            $idPrestamo = $statement->fetchColumn();
-
-            $statement = $this->connection->prepare("DELETE FROM devolucion WHERE id_devolucion = :id");
-            $statement->execute([':id' => $id]);
-
-            if ($idPrestamo !== false) {
-                $statement = $this->connection->prepare("UPDATE prestamo SET fecha_devolucion_real = NULL WHERE id_prestamo = :id_pre");
-                $statement->execute([':id_pre' => $idPrestamo]);
-            }
-
-            $this->connection->commit();
-        } catch (\Throwable $th) {
-            if ($this->connection->inTransaction()) {
-                $this->connection->rollBack();
-            }
-            throw $th;
-        }
+        $statement = $this->connection->prepare("DELETE FROM devolucion WHERE id_devolucion = :id");
+        $statement->execute([':id' => $id]);
         $this->response->success("Devolución eliminada correctamente", [], 1);
     }
 }

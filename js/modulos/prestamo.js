@@ -37,7 +37,7 @@ window.Modulos.prestamo = Crud.crear({
         { campo: "id_usuario_registro", titulo: "Registrado por", fuente: "usuario" },
         { campo: "fecha_prestamo", titulo: "Fecha préstamo" },
         { campo: "fecha_devolucion_programada", titulo: "Devolución programada" },
-        { campo: "fecha_devolucion_real", titulo: "Devolución real" },
+        //{ campo: "fecha_devolucion_real", titulo: "Devolución real" },
         { campo: "observaciones", titulo: "Observaciones" }
     ],
 

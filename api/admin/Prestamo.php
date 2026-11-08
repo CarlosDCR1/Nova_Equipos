@@ -9,21 +9,19 @@ $conection = new Connection();
 $response = new Response();
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Comprueba que el texto sea una fecha y hora válida (acepta "2026-11-05 14:30:00" y "2026-11-05T14:30")
 function fechaHoraValida(mixed $valor): bool
 {
     $texto = trim((string) $valor);
     return $texto !== '' && strtotime($texto) !== false;
 }
 
-// Validaciones comunes de POST y PUT; corta con error si algo falla
+// Validaciones comunes de POST y PUT; corta con error si algo fall
 function validarPrestamo(Connection $conection, Response $response, array $input): void
 {
     if (empty($input['id_estudiante']) || empty($input['id_estado_prestamo']) || empty($input['id_usuario_registro'])) {
         $response->error("El estudiante, el estado y el usuario que registra son obligatorios", 14007, 400);
     }
 
-    // El usuario que registra el préstamo debe pertenecer a un empleado (no a un estudiante)
     $statement = $conection->prepare("SELECT COUNT(*) FROM tblusuario WHERE idUsuario = :id AND idEmpleado IS NOT NULL");
     $statement->execute([':id' => $input['id_usuario_registro']]);
     if ((int) $statement->fetchColumn() === 0) {
@@ -41,7 +39,6 @@ switch ($method) {
         try {
             $prestamo = new Prestamo($conection, $response);
 
-            // Listas para los desplegables del formulario: Prestamo.php?lista=estudiantes | usuarios
             if (($_GET['lista'] ?? '') === 'estudiantes') {
                 $prestamo->listaEstudiantes();
                 break;
@@ -78,6 +75,10 @@ switch ($method) {
 
         } catch (\Throwable $th) {
             $dup = Validar::mensajeDuplicado($th);
+            // 3819 (MySQL) / 4025 (MariaDB): se violó el CHECK de fechas de la tabla prestamo
+            if ($th instanceof PDOException && in_array($th->errorInfo[1] ?? 0, [3819, 4025])) {
+                $response->error("La fecha de devolución programada no puede ser anterior a la fecha del préstamo", 14011, 400);
+            }
             $response->error($dup ?? "Error al agregar el préstamo", $dup ? 14006 : 14002, $dup ? 409 : 400);
         }
         break;
@@ -94,6 +95,9 @@ switch ($method) {
 
         } catch (\Throwable $th) {
             $dup = Validar::mensajeDuplicado($th);
+            if ($th instanceof PDOException && in_array($th->errorInfo[1] ?? 0, [3819, 4025])) {
+                $response->error("La fecha de devolución programada no puede ser anterior a la fecha del préstamo", 14011, 400);
+            }
             $response->error($dup ?? "Error al actualizar el préstamo", $dup ? 14006 : 14003, $dup ? 409 : 400);
         }
         break;

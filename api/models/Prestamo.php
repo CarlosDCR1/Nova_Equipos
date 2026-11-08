@@ -73,7 +73,8 @@ class Prestamo
         $where = $condiciones ? ("WHERE " . implode(" AND ", $condiciones)) : "";
         $query = "SELECT id_prestamo, id_estudiante, id_estado_prestamo, id_usuario_registro, fecha_prestamo,
                          DATE(fecha_devolucion_programada) AS fecha_devolucion_programada,
-                         fecha_devolucion_real, observaciones
+                         (SELECT d.fecha_devolucion FROM devolucion d WHERE d.id_prestamo = prestamo.id_prestamo) AS fecha_devolucion_real,
+                         observaciones
                   FROM prestamo $where ORDER BY id_prestamo DESC";
         $statement = $this->connection->prepare($query);
         $statement->execute($params);
