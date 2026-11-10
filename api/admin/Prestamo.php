@@ -4,10 +4,16 @@ require_once("../core/Connection.php");
 require_once("../core/Response.php");
 require_once("../core/Validar.php");
 require_once("../models/Prestamo.php");
+require_once("../core/Sesion.php");
+Sesion::requerirApi();
+
 
 $conection = new Connection();
 $response = new Response();
 $method = $_SERVER['REQUEST_METHOD'];
+
+$derechos = ['GET' => 'ver', 'POST' => 'insertar', 'PUT' => 'editar', 'DELETE' => 'eliminar'];
+Sesion::requerirPermiso('Prestamos', 'Prestamo', $derechos[$method] ?? 'ver');
 
 function fechaHoraValida(mixed $valor): bool
 {

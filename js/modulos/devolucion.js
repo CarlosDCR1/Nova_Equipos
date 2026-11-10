@@ -1,6 +1,6 @@
 window.Modulos = window.Modulos || {};
 
-window.Modulos.devolucion = Crud.crear({
+const devolucionCrud = Crud.crear({
     titulo: "Mantenimiento de Devoluciones",
     api: "api/admin/Devolucion.php",
     id: "id_devolucion",
@@ -34,3 +34,68 @@ window.Modulos.devolucion = Crud.crear({
         { name: "observaciones", etiqueta: "Observaciones", maxlength: 500, autocomplete: "off" }
     ]
 });
+
+
+window.Modulos.devolucion = {
+    async init(raiz) {
+        await devolucionCrud.init(raiz);
+
+        const selPrestamo = raiz.querySelector("#f-id_prestamo");
+        const form = raiz.querySelector(".crud-form");
+        const tbody = raiz.querySelector(".crud-tbody");
+        if (!selPrestamo) return;
+
+        let disponibles = null;  
+        let enEdicion = null;    
+        let temporizador;
+
+        async function cargar() {
+            try {
+                const json = await fetch("api/admin/Devolucion.php?lista=prestamos").then((r) => r.json());
+                disponibles = new Set((json.data || [])
+                    .filter((p) => Number(p.disponible_devolucion) === 1)
+                    .map((p) => String(p.id_prestamo)));
+            } catch (e) {
+               
+                console.error("No se pudo preparar el filtro de préstamos:", e.message);
+            }
+        }
+
+       
+        function filtrar() {
+            if (!disponibles) return;
+            Array.from(selPrestamo.options).forEach((op) => {
+                if (op.value === "") return; // opción "Selecciona..."
+                const permitido = disponibles.has(op.value) || op.value === enEdicion;
+                op.hidden = !permitido;
+                op.disabled = !permitido;
+            });
+            if (selPrestamo.selectedOptions[0]?.disabled) selPrestamo.value = "";
+        }
+
+        async function refrescar() {
+            await cargar();
+            filtrar();
+        }
+
+       
+        tbody.addEventListener("click", () => {
+            enEdicion = selPrestamo.value || null;
+            filtrar();
+        });
+
+        // Al limpiar el formulario 
+        form.addEventListener("reset", () => setTimeout(() => {
+            enEdicion = null;
+            filtrar();
+        }, 0));
+
+        // Cada vez que la tabla se recarga actualizamos qué préstamos siguen disponibles
+        new MutationObserver(() => {
+            clearTimeout(temporizador);
+            temporizador = setTimeout(refrescar, 150);
+        }).observe(tbody, { childList: true });
+
+        await refrescar();
+    }
+};

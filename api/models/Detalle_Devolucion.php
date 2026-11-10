@@ -2,9 +2,15 @@
 
 class Detalle_Devolucion
 {
+    // estados de equipo
     private const ESTADO_DISPONIBLE = 1;
     private const ESTADO_PRESTADO = 2;
     private const ESTADO_DANADO = 4;
+
+    // estados de préstamo
+    private const ESTADO_PRESTAMO_ACTIVO   = 3;
+    private const ESTADO_PRESTAMO_DEVUELTO = 4;
+    private const ESTADO_PRESTAMO_VENCIDO  = 5;
 
     private Connection $connection;
     private Response $response;
@@ -57,6 +63,38 @@ class Detalle_Devolucion
         ]);
     }
 
+    
+    private function sincronizarPrestamo(int $idDetallePrestamo): void
+    {
+        $statement = $this->connection->prepare(
+            "SELECT id_prestamo FROM detalle_prestamo WHERE id_detalle_prestamo = :id"
+        );
+        $statement->execute([':id' => $idDetallePrestamo]);
+        $idPrestamo = (int) $statement->fetchColumn();
+        if (!$idPrestamo) {
+            return;
+        }
+
+        $statement = $this->connection->prepare(
+            "SELECT COUNT(*) FROM detalle_prestamo dp
+             WHERE dp.id_prestamo = :p
+               AND NOT EXISTS (SELECT 1 FROM detalle_devolucion dd WHERE dd.id_detalle_prestamo = dp.id_detalle_prestamo)"
+        );
+        $statement->execute([':p' => $idPrestamo]);
+        $pendientes = (int) $statement->fetchColumn();
+
+        if ($pendientes === 0) {
+            $sql = "UPDATE prestamo SET id_estado_prestamo = " . self::ESTADO_PRESTAMO_DEVUELTO . "
+                    WHERE id_prestamo = :p
+                      AND id_estado_prestamo IN (" . self::ESTADO_PRESTAMO_ACTIVO . ", " . self::ESTADO_PRESTAMO_VENCIDO . ")";
+        } else {
+            $sql = "UPDATE prestamo SET id_estado_prestamo = " . self::ESTADO_PRESTAMO_ACTIVO . "
+                    WHERE id_prestamo = :p
+                      AND id_estado_prestamo = " . self::ESTADO_PRESTAMO_DEVUELTO;
+        }
+        $this->connection->prepare($sql)->execute([':p' => $idPrestamo]);
+    }
+
     // LISTA PARA EL DESPLEGABLE DE DEVOLUCIONES 
     public function listaDevoluciones()
     {
@@ -79,8 +117,11 @@ class Detalle_Devolucion
         $query = "SELECT dp.id_detalle_prestamo, dp.id_prestamo,
                          CONCAT(ma.nombre_marca, ' ', mp.nombre_modelo_producto, ' (', eq.codigo_inventario, ')',
                                 ' - Préstamo #', dp.id_prestamo) AS texto_producto,
-                         (dd.id_detalle_devolucion IS NOT NULL) AS ya_devuelto
+                         (dd.id_detalle_devolucion IS NOT NULL) AS ya_devuelto,
+                         (ep.nombre_estado IN ('Activo', 'Vencido')) AS prestamo_abierto
                   FROM detalle_prestamo dp
+                  INNER JOIN prestamo pr ON pr.id_prestamo = dp.id_prestamo
+                  INNER JOIN estado_prestamo ep ON ep.id_estado_prestamo = pr.id_estado_prestamo
                   INNER JOIN equipo eq ON eq.id_equipo = dp.id_equipo
                   INNER JOIN modelo_producto mp ON mp.id_modelo_producto = eq.id_modelo_producto
                   INNER JOIN marca ma ON ma.id_marca = mp.id_marca
@@ -144,6 +185,7 @@ class Detalle_Devolucion
 
         try {
             $this->aplicarDevolucion($idDetalle, $idIncidente);
+            $this->sincronizarPrestamo($idDetalle);
         } catch (\Throwable $th) {
             // id_detalle_prestamo es único, así que identifica el registro recién insertado
             $statement = $this->connection->prepare("DELETE FROM detalle_devolucion WHERE id_detalle_prestamo = :id");
@@ -199,6 +241,12 @@ class Detalle_Devolucion
                 ':observaciones' => ($d['observaciones'] ?? '') !== '' ? $d['observaciones'] : null,
                 ':id' => $id
             ]);
+
+            // si cambió de producto, los dos préstamos pueden cambiar de estado
+            $this->sincronizarPrestamo($detalleAnterior);
+            if ($detalleNuevo !== $detalleAnterior) {
+                $this->sincronizarPrestamo($detalleNuevo);
+            }
         } catch (\Throwable $th) {
             if ($cambia) { // deja el equipo como estaba
                 $this->deshacerDevolucion($detalleNuevo, $incidenteNuevo);
@@ -228,6 +276,8 @@ class Detalle_Devolucion
                 (int) $anterior['id_detalle_prestamo'],
                 $this->idIncidente($anterior['id_tipo_incidente'])
             );
+            // el préstamo vuelve a Activo si ya estaba Devuelto
+            $this->sincronizarPrestamo((int) $anterior['id_detalle_prestamo']);
         }
         $this->response->success("Detalle de devolución eliminado correctamente", [], 1);
     }

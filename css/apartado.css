@@ -1,0 +1,42 @@
+
+
+.ap-aviso { padding: .7rem 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid transparent; }
+.ap-aviso[hidden] { display: none; }
+.ap-aviso-ok    { background: rgba(46, 160, 67, .12);  border-color: rgba(46, 160, 67, .45); }
+.ap-aviso-error { background: rgba(218, 54, 51, .12);  border-color: rgba(218, 54, 51, .45); }
+
+.ap-contador { display: block; }
+.ap-subtitulo { font-size: 1.1rem; margin: 1.25rem 0 .6rem; }
+.ap-categoria { font-size: .95rem; margin: 1rem 0 .5rem; opacity: .8; }
+.ap-barra { margin-bottom: 1rem; }
+
+
+.ap-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .6rem; }
+.ap-equipo {
+    display: flex; flex-wrap: wrap; align-items: flex-start; gap: .6rem;
+    padding: .65rem .8rem; cursor: pointer;
+    border: 1px solid rgba(128, 128, 128, .35); border-radius: 8px;
+}
+.ap-equipo:has(input:checked)  { border-color: #2563eb; background: rgba(37, 99, 235, .08); }
+.ap-equipo:has(input:disabled) { opacity: .5; cursor: not-allowed; }
+.ap-equipo-texto { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.ap-equipo-texto small { opacity: .7; }
+.ap-etiqueta {
+    flex-basis: 100%; font-size: .75rem; padding: .1rem .5rem; border-radius: 999px; width: fit-content;
+    background: rgba(217, 119, 6, .15); color: #b45309;
+}
+
+/* estados */
+.ap-badge { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .8rem; font-weight: 600; }
+.ap-solicitado { background: rgba(217, 119, 6, .15);  color: #b45309; }
+.ap-apartado   { background: rgba(37, 99, 235, .15);  color: #1d4ed8; }
+.ap-activo     { background: rgba(46, 160, 67, .15);  color: #15803d; }
+.ap-devuelto   { background: rgba(128, 128, 128, .18); }
+.ap-cancelado  { background: rgba(128, 128, 128, .18); }
+.ap-vencido,
+.ap-rechazado  { background: rgba(218, 54, 51, .15);  color: #b91c1c; }
+
+/* bandeja */
+.ap-acciones { display: flex; gap: .4rem; flex-wrap: wrap; }
+.ap-restante { opacity: .7; }
+.ap-urgente .ap-restante { color: #b91c1c; opacity: 1; font-weight: 600; }

@@ -43,9 +43,6 @@ const detalleDevolucionCrud = Crud.crear({
     ]
 });
 
-// Envoltorio: después de dibujar el CRUD, el desplegable "Producto prestado" solo muestra
-//   1) los productos del mismo préstamo que la devolución elegida, y
-//   2) los productos que todavía NO se han devuelto (el que se está editando sí se conserva).
 window.Modulos.detalle_devolucion = {
     async init(raiz) {
         await detalleDevolucionCrud.init(raiz);
@@ -56,14 +53,16 @@ window.Modulos.detalle_devolucion = {
         const tbody = raiz.querySelector(".crud-tbody");
         if (!selDevolucion || !selProducto) return;
 
-        let prestamoDeDevolucion = {}; // id_devolucion -> id_prestamo
-        let prestamoDeProducto = {};   // id_detalle_prestamo -> id_prestamo
-        let productoDevuelto = {};     // id_detalle_prestamo -> true si ya tiene devolución
-        let productoEnEdicion = null;  // producto del registro seleccionado en la tabla
+        let prestamoDeDevolucion = {};   
+        let prestamoDeProducto = {};      
+        let productoPendiente = {};       
+        let prestamosConPendientes = new Set();
+        let productoEnEdicion = null;     
+        let devolucionEnEdicion = null; 
         let mapasListos = false;
         let temporizador;
 
-        // Consulta las listas actuales para saber a qué préstamo pertenece cada cosa y qué ya se devolvió
+        // Consultamos las listas actuales para saber a qué préstamo pertenece cada cosa y qué sigue pendiente :)
         async function cargarMapas() {
             try {
                 const [devoluciones, productos] = await Promise.all([
@@ -72,30 +71,50 @@ window.Modulos.detalle_devolucion = {
                 ]);
                 prestamoDeDevolucion = {};
                 prestamoDeProducto = {};
-                productoDevuelto = {};
+                productoPendiente = {};
+                prestamosConPendientes = new Set();
+
                 (devoluciones.data || []).forEach((d) => (prestamoDeDevolucion[d.id_devolucion] = String(d.id_prestamo)));
                 (productos.data || []).forEach((p) => {
-                    prestamoDeProducto[p.id_detalle_prestamo] = String(p.id_prestamo);
-                    productoDevuelto[p.id_detalle_prestamo] = Number(p.ya_devuelto) === 1;
+                    const idPrestamo = String(p.id_prestamo);
+                    // si el modelo no manda prestamo_abierto (versión vieja), se asume abierto
+                    const abierto = p.prestamo_abierto === undefined || Number(p.prestamo_abierto) === 1;
+                    const pendiente = abierto && Number(p.ya_devuelto) !== 1;
+                    prestamoDeProducto[p.id_detalle_prestamo] = idPrestamo;
+                    productoPendiente[p.id_detalle_prestamo] = pendiente;
+                    if (pendiente) prestamosConPendientes.add(idPrestamo);
                 });
                 mapasListos = true;
             } catch (e) {
-                // Sin los mapas no se filtra; el servidor igual valida y rechaza los casos incorrectos
+                
                 console.error("No se pudo preparar el filtro de productos:", e.message);
             }
         }
 
-        // Oculta (y deshabilita) los productos que no se pueden elegir
+        function ocultar(op, permitido) {
+            op.hidden = !permitido;
+            op.disabled = !permitido;
+        }
+
+        
         function filtrar(limpiarSiInvalido) {
             if (!mapasListos) return;
+
+            //devoluciones con productos pendientes
+            Array.from(selDevolucion.options).forEach((op) => {
+                if (op.value === "") return; // opción "Selecciona..."
+                const conPendientes = prestamosConPendientes.has(prestamoDeDevolucion[op.value]);
+                ocultar(op, conPendientes || op.value === devolucionEnEdicion);
+            });
+            if (limpiarSiInvalido && selDevolucion.selectedOptions[0]?.disabled) selDevolucion.value = "";
+
+            // productos pendientes del mismo préstamo que la devolución elegida
             const idPrestamo = prestamoDeDevolucion[selDevolucion.value];
             Array.from(selProducto.options).forEach((op) => {
-                if (op.value === "") return; // opción "Selecciona..."
+                if (op.value === "") return;
                 const delPrestamo = idPrestamo !== undefined && prestamoDeProducto[op.value] === idPrestamo;
-                const disponible = !productoDevuelto[op.value] || op.value === productoEnEdicion;
-                const permitido = delPrestamo && disponible;
-                op.hidden = !permitido;
-                op.disabled = !permitido;
+                const disponible = productoPendiente[op.value] || op.value === productoEnEdicion;
+                ocultar(op, delPrestamo && disponible);
             });
             if (limpiarSiInvalido && selProducto.selectedOptions[0]?.disabled) selProducto.value = "";
         }
@@ -107,19 +126,21 @@ window.Modulos.detalle_devolucion = {
 
         selDevolucion.addEventListener("change", () => filtrar(true));
 
-        // Al seleccionar una fila de la tabla (para editar): su producto sigue disponible
+        // Al seleccionar una fila de la tabla su devolución y su producto siguen disponibles
         tbody.addEventListener("click", () => {
+            devolucionEnEdicion = selDevolucion.value || null;
             productoEnEdicion = selProducto.value || null;
             filtrar(false);
         });
 
-        // Al limpiar el formulario (también después de agregar, editar o eliminar)
+        // Al limpiar el formulario 
         form.addEventListener("reset", () => setTimeout(() => {
+            devolucionEnEdicion = null;
             productoEnEdicion = null;
             filtrar(false);
         }, 0));
 
-        // Cada vez que la tabla se recarga, se actualiza qué productos ya fueron devueltos
+        // Cada vez que la tabla se recarga se actualiza qué sigue pendiente
         new MutationObserver(() => {
             clearTimeout(temporizador);
             temporizador = setTimeout(refrescar, 150);

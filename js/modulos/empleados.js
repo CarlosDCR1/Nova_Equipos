@@ -16,7 +16,6 @@ window.Modulos.empleados = Crud.crear({
 
     
 
-
     busqueda: [
         { valor: "nombre", texto: "Nombre" },
         { valor: "apellidos",texto: "Apellidos" },

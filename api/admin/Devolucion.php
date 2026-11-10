@@ -1,13 +1,18 @@
 <?php
-
+require_once("../core/Sesion.php");      
 require_once("../core/Connection.php");
 require_once("../core/Response.php");
 require_once("../core/Validar.php");
 require_once("../models/Devolucion.php");
 
+Sesion::requerirApi();
+
 $conection = new Connection();
 $response = new Response();
 $method = $_SERVER['REQUEST_METHOD'];
+
+$derechos = ['GET' => 'ver', 'POST' => 'insertar', 'PUT' => 'editar', 'DELETE' => 'eliminar'];
+Sesion::requerirPermiso('Devoluciones', 'Devolucion', $derechos[$method] ?? 'ver');
 
 function validarDevolucion(Connection $conection, Response $response, array $input): void
 {

@@ -19,10 +19,13 @@ class Prestamo
             return null;
         }
         $texto = str_replace('T', ' ', $texto);
+        if (strlen($texto) === 10) {
+            return $texto . ' 23:59:59';
+        }
         return strlen($texto) === 16 ? $texto . ':00' : $texto;
     }
 
-    // LISTA PARA EL DESPLEGABLE DE ESTUDIANTES (nombre completo y carnet en un solo texto)
+   
     public function listaEstudiantes()
     {
         $query = "SELECT id_estudiante,
@@ -35,8 +38,6 @@ class Prestamo
         $this->response->success("Estudiantes obtenidos correctamente", $result, 1);
     }
 
-    // LISTA PARA EL DESPLEGABLE DE USUARIOS: solo usuarios activos que pertenecen a un empleado
-    // (solo id y nombre; nunca se envía la contraseña)
     public function listaUsuariosEmpleado()
     {
         $query = "SELECT idUsuario AS id_usuario, nombreUsuario AS nombre_usuario

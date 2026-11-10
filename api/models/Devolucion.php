@@ -14,13 +14,17 @@ class Devolucion
     public function listaPrestamos()
     {
         $query = "SELECT p.id_prestamo,
-                         CONCAT('Préstamo #', p.id_prestamo, ' - ', e.nombre_estudiante, ' ', COALESCE(e.apellidos_estudiante, ''),
+                        CONCAT('Préstamo #', p.id_prestamo, ' - ', e.nombre_estudiante, ' ', COALESCE(e.apellidos_estudiante, ''),
                                 ' - ', e.carnet_estudiante,
-                                CASE WHEN d.id_devolucion IS NULL THEN '' ELSE ' (ya devuelto)' END) AS texto_prestamo
-                  FROM prestamo p
-                  INNER JOIN estudiante e ON e.id_estudiante = p.id_estudiante
-                  LEFT JOIN devolucion d ON d.id_prestamo = p.id_prestamo
-                  ORDER BY p.id_prestamo DESC";
+                                CASE WHEN ep.nombre_estado NOT IN ('Activo', 'Vencido') THEN CONCAT(' (', LOWER(ep.nombre_estado), ')')
+                                    WHEN d.id_devolucion IS NOT NULL THEN ' (ya tiene devolución)'
+                                    ELSE '' END) AS texto_prestamo,
+                        (ep.nombre_estado IN ('Activo', 'Vencido') AND d.id_devolucion IS NULL) AS disponible_devolucion
+                FROM prestamo p
+                INNER JOIN estudiante e ON e.id_estudiante = p.id_estudiante
+                INNER JOIN estado_prestamo ep ON ep.id_estado_prestamo = p.id_estado_prestamo
+                LEFT JOIN devolucion d ON d.id_prestamo = p.id_prestamo
+                ORDER BY p.id_prestamo DESC";
         $statement = $this->connection->prepare($query);
         $statement->execute();
         $result = $statement->fetchAll(PDO::FETCH_ASSOC);

@@ -12,6 +12,8 @@ Sesion::requerirPagina();
     <link rel="stylesheet" href="css/panel_navegador.css?v=<?= filemtime('css/panel_navegador.css') ?>">
     <link rel="stylesheet" href="css/cruds.css?v=<?= filemtime('css/cruds.css') ?>">
     <link rel="stylesheet" href="css/dashboard.css?v=<?= filemtime('css/dashboard.css') ?>">
+    <link rel="stylesheet" href="css/apartado.css?v=<?= filemtime('css/apartado.css') ?>">
+
 </head>
 <body>
 
@@ -55,7 +57,6 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#modelo_producto">Modelo de producto</a></li>
                 <li><a class="nav-link" href="#equipo">Equipo</a></li>
                 <li><a class="nav-link" href="#inventario_equipo">Inventario de equipo</a></li>
-                <li><a class="nav-link" href="#movimiento_inventario">Movimiento de inventario</a></li>
             </ul>
         </nav>
         <?php endif; ?>
@@ -64,9 +65,14 @@ Sesion::requerirPagina();
         <nav class="nav-group">
             <div class="nav-group-title">Préstamos</div>
             <ul class="nav-list">
-                <li><a class="nav-link" href="#estado_prestamo">Estado de préstamo</a></li>
-                <li><a class="nav-link" href="#prestamo">Préstamo</a></li>
-                <li><a class="nav-link" href="#detalle_prestamo">Detalle de préstamo</a></li>
+                <?php if (Sesion::esEstudiante()): ?>
+                    <li><a class="nav-link" href="#apartar">Apartar equipo</a></li>
+                <?php else: ?>
+                    <li><a class="nav-link" href="#bandeja_prestamos">Solicitudes y apartados</a></li>
+                    <li><a class="nav-link" href="#estado_prestamo">Estado de préstamo</a></li>
+                    <li><a class="nav-link" href="#prestamo">Préstamo</a></li>
+                    <li><a class="nav-link" href="#detalle_prestamo">Detalle de préstamo</a></li>
+                <?php endif; ?>
             </ul>
         </nav>
         <?php endif; ?>
@@ -101,5 +107,7 @@ Sesion::requerirPagina();
 
 <script src="js/cruds.js?v=<?= filemtime('js/cruds.js') ?>"></script>
 <script src="js/panel_navegador.js?v=<?= filemtime('js/panel_navegador.js') ?>"></script>
+<script src="js/apartar.js?v=<?= filemtime('js/apartar.js') ?>"></script>
+<script src="js/bandeja_prestamos.js?v=<?= filemtime('js/bandeja_prestamos.js') ?>"></script>
 </body>
 </html>
