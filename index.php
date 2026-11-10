@@ -41,7 +41,6 @@ Sesion::requerirPagina();
                 <li><a class="nav-link" href="#tblmodulo">Módulo</a></li>
                 <li><a class="nav-link" href="#tblaplicacion">Aplicación</a></li>
                 <li><a class="nav-link" href="#usuarios">Usuario</a></li>
-                <li><a class="nav-link" href="#tblintentologin">Intentos de login</a></li>
                 <li><a class="nav-link" href="#tblbitacora">Bitácora</a></li>
             </ul>
         </nav>
