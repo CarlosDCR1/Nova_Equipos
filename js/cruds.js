@@ -29,6 +29,13 @@ window.Crud = {
                 </table>
             </div>
 
+            <div class="crud-paginacion" style="display:none; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:12px; margin:12px 0 20px;">
+                <span class="crud-pag-info"></span>
+                <button type="button" class="btn btn-light" data-accion="pag-anterior">Anterior</button>
+                <span class="crud-pag-actual"></span>
+                <button type="button" class="btn btn-light" data-accion="pag-siguiente">Siguiente</button>
+            </div>
+
             <form class="filter-card crud-form">
                 <div class="filter-grid crud-campos"></div>
                 <div class="filter-actions">
@@ -50,11 +57,18 @@ window.Crud = {
                 const tbody = $(".crud-tbody");
                 const contBuscador = $(".crud-buscador");
                 const contCampos = $(".crud-campos");
+                const contPaginacion = $(".crud-paginacion");
 
                 const fuentes = {};      
                 let idActual = "";
                 let filaActiva = null;
                 let temporizador;
+
+                // --------------------------------Paginacion-------------------- ----------
+                // aqui definimos de cuantos registros estara la paginacion
+                const POR_PAGINA = opcionesCrud.porPagina || 10;
+                let registros = [];   // todos los registros 
+                let pagina = 1;       // pagina actual
 
                 $(".crud-titulo").textContent = opcionesCrud.titulo;
 
@@ -72,7 +86,7 @@ window.Crud = {
                     return json;
                 }
 
-                // aqui cargamos las fuentes de datos de todos los CRUDS para los select
+                // aqui cargamos las fuentes de datos de todos los cruds para los select
                 async function cargarFuentes() {
                    
                     await Promise.all(Object.entries(opcionesCrud.fuentes || {}).map(async ([clave, fuente]) => {
@@ -106,8 +120,7 @@ window.Crud = {
                 return r ? leerTexto(f, r) : id;
             }
 
-                // Awui creamos ya lo que va en el html pero manipulado de forma general para todos los CRUDS
-                //  ya que todos tienen la misma estructura de buscador, tabla y formulario manipulado en el DOM
+                // Awui creamos ya lo que va en el html pero manipulado de forma general para todos los crud
 
                 function crearCampo(def, prefijo) {
                     const id = `${prefijo}-${def.name || def.clave}`;
@@ -196,6 +209,7 @@ window.Crud = {
                 // tabla 
                 function mensaje(clase, texto) {
                     tbody.innerHTML = "";
+                    contPaginacion.style.display = "none";
                     const tr = document.createElement("tr");
                     const td = document.createElement("td");
                     td.colSpan = opcionesCrud.columnas.length;
@@ -225,21 +239,59 @@ window.Crud = {
                     return f;
                 }
 
-                async function cargar() {
+                // ---------- PAGINACIÓN: funciones ----------
+                const totalPaginas = () => Math.max(1, Math.ceil(registros.length / POR_PAGINA));
+
+                // Actualiza los textos y botones
+                // si la tablano tiene tantos registros los va a ocultar 
+                function actualizarPaginacion() {
+                    const total = registros.length;
+                    if (total <= POR_PAGINA) {
+                        contPaginacion.style.display = "none";
+                        return;
+                    }
+                    const desde = (pagina - 1) * POR_PAGINA + 1;
+                    const hasta = Math.min(pagina * POR_PAGINA, total);
+                    $(".crud-pag-info").textContent = `Mostrando ${desde}–${hasta} de ${total}`;
+                    $(".crud-pag-actual").textContent = `Página ${pagina} de ${totalPaginas()}`;
+                    btn("pag-anterior").disabled = pagina <= 1;
+                    btn("pag-siguiente").disabled = pagina >= totalPaginas();
+                    contPaginacion.style.display = "flex";
+                }
+
+                // Coloca en la tabla solo los registros de la página actual
+                function dibujarPagina() {
+                    tbody.innerHTML = "";
+                    filaActiva = null;
+                    if (!registros.length) return mensaje("empty-state", `No se encontraron ${opcionesCrud.plural}.`);
+
+                    const inicio = (pagina - 1) * POR_PAGINA;
+                    registros.slice(inicio, inicio + POR_PAGINA).forEach((fila) => {
+                        const tr = document.createElement("tr");
+                        tr.style.cursor = "pointer";
+                        opcionesCrud.columnas.forEach((c) => tr.appendChild(celda(c, fila)));
+                        tr.addEventListener("click", () => seleccionar(fila, tr));
+                        tbody.appendChild(tr);
+                    });
+                    actualizarPaginacion();
+                }
+
+                function irAPagina(n) {
+                    const nueva = Math.min(Math.max(1, n), totalPaginas());
+                    if (nueva === pagina) return;
+                    pagina = nueva;
+                    if (idActual) limpiar(); // la fila seleccionada ya no se ve: se limpia el formulario
+                    dibujarPagina();
+                }
+
+                // en una búsqueda vuelve a la página 1
+                async function cargar(conservarPagina = false) {
                     mensaje("empty-state", `Cargando ${opcionesCrud.plural}...`);
                     try {
                         const { data } = await peticion("GET", null, filtros());
-                        tbody.innerHTML = "";
-                        filaActiva = null;
-                        if (!data.length) return mensaje("empty-state", `No se encontraron ${opcionesCrud.plural}.`);
-
-                        data.forEach((fila) => {
-                            const tr = document.createElement("tr");
-                            tr.style.cursor = "pointer";
-                            opcionesCrud.columnas.forEach((c) => tr.appendChild(celda(c, fila)));
-                            tr.addEventListener("click", () => seleccionar(fila, tr));
-                            tbody.appendChild(tr);
-                        });
+                        registros = data;
+                        pagina = conservarPagina ? Math.min(pagina, totalPaginas()) : 1;
+                        dibujarPagina();
                     } catch (e) {
                         mensaje("error-state", "Error al cargar: " + e.message);
                     }
@@ -286,7 +338,7 @@ window.Crud = {
                     try {
                         await peticion(metodo, body);
                         limpiar();
-                        await cargar();
+                        await cargar(true);
                     } catch (e) {
                         alert(e.message);
                     }
@@ -316,7 +368,9 @@ window.Crud = {
                 btn("editar").addEventListener("click", editar);
                 btn("eliminar").addEventListener("click", eliminar);
                 btn("limpiar").addEventListener("click", limpiar);
-                btn("buscar").addEventListener("click", cargar);
+                btn("buscar").addEventListener("click", () => cargar());
+                btn("pag-anterior").addEventListener("click", () => irAPagina(pagina - 1));
+                btn("pag-siguiente").addEventListener("click", () => irAPagina(pagina + 1));
                 btn("limpiar-busqueda").addEventListener("click", () => {
                     bCampo.selectedIndex = 0;
                     bTexto.value = "";
@@ -326,7 +380,7 @@ window.Crud = {
 
                 bTexto.addEventListener("input", () => {
                     clearTimeout(temporizador);
-                    temporizador = setTimeout(cargar, 350);
+                    temporizador = setTimeout(() => cargar(), 350);
                 });
 
                 // ---------- INICIO ----------
@@ -336,7 +390,7 @@ window.Crud = {
                 construirBuscador();
                 construirFormulario();
                 construirCabecera();
-                [bCampo, ...filtrosExtra].forEach((c) => c.addEventListener("change", cargar));
+                [bCampo, ...filtrosExtra].forEach((c) => c.addEventListener("change", () => cargar()));
                 limpiar();
                 await cargar();
             }
