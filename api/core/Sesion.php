@@ -1,6 +1,7 @@
 <?php
 require_once(__DIR__ . "/Configuration.php");
 require_once(__DIR__ . "/Response.php");
+require_once(__DIR__ . "/RegistroBitacora.php");
 
 class Sesion
 {
@@ -29,11 +30,12 @@ class Sesion
     }
 
     // para los endpoints del controlador si no hay sesión, responde 401
-    static function requerirApi(): void
+  static function requerirApi(): void
     {
         if (!self::activa()) {
             Response::error("Sesión no iniciada o expirada", 401, 401);
         }
+        RegistroBitacora::programar();
     }
 
     // para login.php: si ya inició sesión, no vuelve a ver el login

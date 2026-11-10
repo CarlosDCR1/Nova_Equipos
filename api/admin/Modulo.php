@@ -3,6 +3,7 @@ require_once("../core/Connection.php");
 require_once("../models/Modulo.php");
 require_once("../core/Response.php");
 require_once("../core/Sesion.php");
+require_once("../core/validar.php");
 Sesion::requerirApi();
 
 $conection = new Connection();
