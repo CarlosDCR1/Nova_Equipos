@@ -53,6 +53,9 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
 
+        Validar::estructuraSoloLetras($input['nombre_categoria_producto'] ?? '', 6005);
+        Validar::estructuraSoloLetras($input['descripcion_categoria_producto'] ?? '', 6005);
+
         try {
             $categoria = new Categoria_Producto($conection, $response);
             $categoria->editar($id, $input);
