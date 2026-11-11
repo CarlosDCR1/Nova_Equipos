@@ -70,6 +70,7 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
 
         validarDetalleDevolucion($conection, $response, $input ?? []);
+        Validar::estructuraSoloLetras($input['observaciones'] ?? '', 6006);
 
         try {
             $detalle = new Detalle_Devolucion($conection, $response);
@@ -85,8 +86,9 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? $input['id_detalle_devolucion'] ?? 0);
 
-        validarDetalleDevolucion($conection, $response, $input ?? []);
-
+        validarDetalleDevolucion($conection, $response, $input ?? []);        
+        Validar::estructuraSoloLetras($input['observaciones'] ?? '', 6006);
+        
         try {
             $detalle = new Detalle_Devolucion($conection, $response);
             $detalle->editar($id, $input);

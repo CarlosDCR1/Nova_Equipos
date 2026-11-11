@@ -69,6 +69,7 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
 
         validarPrestamo($conection, $response, $input ?? []);
+        Validar::estructuraSoloLetras($input['observaciones'] ?? '', 6005);
 
         // Al crear un préstamo, la devolución programada debe ser posterior a hoy
         if (strtotime(substr($input['fecha_devolucion_programada'], 0, 10)) <= strtotime('today')) {
@@ -94,6 +95,7 @@ switch ($method) {
         $id = (int) ($input['id'] ?? $input['id_prestamo'] ?? 0);
 
         validarPrestamo($conection, $response, $input ?? []);
+        Validar::estructuraSoloLetras($input['observaciones'] ?? '', 6005);
 
         try {
             $prestamo = new Prestamo($conection, $response);

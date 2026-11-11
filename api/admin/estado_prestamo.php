@@ -54,6 +54,9 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? $input['id_estado_prestamo'] ?? 0);
  
+        Validar::estructuraSoloLetras($input['nombre_estado'] ?? '', 6005);
+        Validar::estructuraSoloLetras($input['descripcion'] ?? '', 6005);
+
         if (trim($input['nombre_estado'] ?? '') === '') {
             $response->error("El nombre del estado es obligatorio", 9005, 400);}
  
