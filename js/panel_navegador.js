@@ -4,6 +4,7 @@ const enlaces = sidebar.querySelectorAll(".nav-link");
 const brandLogo = document.getElementById('brandLogo');
 const menuBtn = document.getElementById("menuBtn");
 const mqMovil = window.matchMedia("(max-width: 960px)");
+const overlay = document.getElementById("overlay");
 
 
 
@@ -30,9 +31,17 @@ document.querySelectorAll(".nav-group-title").forEach((titulo) => {
     });
 });
 
+function cerrarMenuMovil() {
+    sidebar.classList.remove("open");
+    document.body.classList.remove("menu-open");
+    menuBtn.setAttribute("aria-expanded", "false");
+}
+
 function alternarMenu() {
     if (mqMovil.matches) {
-        sidebar.classList.toggle("open");
+        const abierto = sidebar.classList.toggle("open");
+        document.body.classList.toggle("menu-open", abierto);
+        menuBtn.setAttribute("aria-expanded", String(abierto));
     } else {
         sidebar.classList.toggle("mini");
         try {
@@ -89,6 +98,5 @@ async function navegar() {
 
 window.addEventListener("hashchange", navegar);
 
-document.getElementById("menuBtn")?.addEventListener("click", () => sidebar.classList.toggle("open"));
 
 navegar();
