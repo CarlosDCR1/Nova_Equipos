@@ -4,6 +4,7 @@ const enlaces = sidebar.querySelectorAll(".nav-link");
 const brandLogo = document.getElementById('brandLogo');
 const menuBtn = document.getElementById("menuBtn");
 const mqMovil = window.matchMedia("(max-width: 960px)");
+const overlay = document.getElementById("overlay");
 
 
 
@@ -30,9 +31,17 @@ document.querySelectorAll(".nav-group-title").forEach((titulo) => {
     });
 });
 
+function cerrarMenuMovil() {
+    sidebar.classList.remove("open");
+    document.body.classList.remove("menu-open");
+    menuBtn.setAttribute("aria-expanded", "false");
+}
+
 function alternarMenu() {
     if (mqMovil.matches) {
-        sidebar.classList.toggle("open");
+        const abierto = sidebar.classList.toggle("open");
+        document.body.classList.toggle("menu-open", abierto);
+        menuBtn.setAttribute("aria-expanded", String(abierto));
     } else {
         sidebar.classList.toggle("mini");
         try {
@@ -54,6 +63,10 @@ function alternarMenu() {
 });
 
 menuBtn.addEventListener("click", alternarMenu);
+
+overlay.addEventListener("click", cerrarMenuMovil);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") cerrarMenuMovil(); });
+mqMovil.addEventListener("change", cerrarMenuMovil);
 
 function cargarScript(nombre) {
     return new Promise((resolve, reject) => {
@@ -84,11 +97,10 @@ async function navegar() {
         contenido.innerHTML = `<p class="error-state">${e.message}</p>`;
     }
 
-    sidebar.classList.remove("open"); 
+    cerrarMenuMovil(); 
 }
 
 window.addEventListener("hashchange", navegar);
 
-document.getElementById("menuBtn")?.addEventListener("click", () => sidebar.classList.toggle("open"));
 
 navegar();
