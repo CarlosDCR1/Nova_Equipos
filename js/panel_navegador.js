@@ -64,6 +64,10 @@ function alternarMenu() {
 
 menuBtn.addEventListener("click", alternarMenu);
 
+overlay.addEventListener("click", cerrarMenuMovil);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") cerrarMenuMovil(); });
+mqMovil.addEventListener("change", cerrarMenuMovil);
+
 function cargarScript(nombre) {
     return new Promise((resolve, reject) => {
         if (cargados.has(nombre)) return resolve();
@@ -93,7 +97,7 @@ async function navegar() {
         contenido.innerHTML = `<p class="error-state">${e.message}</p>`;
     }
 
-    sidebar.classList.remove("open"); 
+    cerrarMenuMovil(); 
 }
 
 window.addEventListener("hashchange", navegar);
