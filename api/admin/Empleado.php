@@ -45,6 +45,8 @@ switch ($method) {
         Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 3005);
         Validar::estructuratelefono($input['telefono_empleado'] ?? '', 3006);
         Validar::validarEdad($input['fecha_nacimiento'] ?? '', 3007);
+        Validar::estructuraSoloLetras($input['nombre'] ?? '',3008);
+        Validar::estructuraSoloLetras($input['apellidos'] ?? '',3009);
 
         try {
             $empleado = new Empleado($conection, $response);
@@ -64,6 +66,8 @@ switch ($method) {
         Validar::estructuraCorreoumg($input['correo_institucional'] ?? '', 3005);
         Validar::estructuratelefono($input['telefono_empleado'] ?? '', 3006);
         Validar::validarEdad($input['fecha_nacimiento'] ?? '', 3007);
+        Validar::estructuraSoloLetras($input['nombre'] ?? '',3008);
+        Validar::estructuraSoloLetras($input['apellidos'] ?? '',3009);
 
         try {
             $empleado = new Empleado($conection, $response);

@@ -57,6 +57,8 @@ switch ($method) {
     case 'PUT':
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? $input['id_marca'] ?? 0);
+        
+        Validar::estructuraSoloLetras($input['nombre_marca'] ?? '', 6005);
 
         if (trim($input['nombre_marca'] ?? '') === '') {
             $response->error("El nombre de la marca es obligatorio", 7005, 400);

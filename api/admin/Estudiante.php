@@ -43,6 +43,8 @@ switch ($method) {
         Validar::estructuraTelefono($input['numero_estudiante'] ?? '', 1006);
         Validar::estructuraCarnet($input['carnet_estudiante'] ?? '', 1007);
         Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1009);   
+        Validar::estructuraSoloLetras($input['nombre'] ?? '',1010);
+        Validar::estructuraSoloLetras($input['apellidos'] ?? '',1011);
 
         try {
             $estudiante = new Estudiante($conection, $response);
@@ -63,6 +65,8 @@ switch ($method) {
         Validar::estructuraTelefono($input['numero_estudiante'] ?? '', 1006);
         Validar::estructuraCarnet($input['carnet_estudiante'] ?? '', 1007);
         Validar::validarEdad($input['fecha_nacimiento'] ?? '', 1009);   
+        Validar::estructuraSoloLetras($input['nombre'] ?? '',1010);
+        Validar::estructuraSoloLetras($input['apellidos'] ?? '',1011);
     
 
         try {

@@ -4,6 +4,9 @@ require_once("../core/Connection.php");
 require_once("../core/Response.php");
 require_once("../core/Validar.php");
 require_once("../models/Detalle_Prestamo.php");
+require_once("../core/Sesion.php");
+Sesion::requerirApi();
+
 
 $conection = new Connection();
 $response = new Response();
@@ -38,6 +41,8 @@ switch ($method) {
 
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
+        
+        Validar::estructuraSoloLetras($input['observaciones'] ?? '', 6005);
 
         if (empty($input['id_prestamo']) || empty($input['id_equipo'])) {
             $response->error("El préstamo y el equipo son obligatorios", 18007, 400);
@@ -56,6 +61,8 @@ switch ($method) {
     case 'PUT':
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? $input['id_detalle_prestamo'] ?? 0);
+        
+        Validar::estructuraSoloLetras($input['observaciones'] ?? '', 6005);
 
         if (empty($input['id_prestamo']) || empty($input['id_equipo'])) {
             $response->error("El préstamo y el equipo son obligatorios", 18007, 400);
