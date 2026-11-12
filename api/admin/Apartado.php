@@ -12,16 +12,16 @@ $apartado = new Apartado($conection);
 
 switch ($method) {
 
-    // Estudiante: equipos que puede apartar y sus préstamos. Empleado: solicitudes y apartados pendientes.
+    
     case 'GET':
         Sesion::requerirPermiso('Prestamos', 'Prestamo', 'ver');
         try {
             if (Sesion::esEstudiante()) {
                 $data = [
-                    'disponibles'  => $apartado->disponibles((int) $_SESSION['idEstudiante']),
+                    'modelos'       => $apartado->modelosDisponibles((int) $_SESSION['idEstudiante']),
                     'mis_prestamos' => $apartado->misPrestamos((int) $_SESSION['idEstudiante']),
-                    'abiertos' => $apartado->abiertos((int) $_SESSION['idEstudiante']),
-                    'max' => Apartado::MAX_EQUIPOS,
+                    'abiertos'      => $apartado->abiertos((int) $_SESSION['idEstudiante']),
+                    'max'           => Apartado::MAX_EQUIPOS,
                 ];
             } else {
                 $data = ['pendientes' => $apartado->pendientes()];
@@ -32,7 +32,7 @@ switch ($method) {
         }
         break;
 
-    // El estudiante y el usuario salen de la sesión, nunca del formulario.
+    
     case 'POST':
         Sesion::requerirPermiso('Prestamos', 'Prestamo', 'insertar');
         if (!Sesion::esEstudiante()) {
@@ -41,7 +41,12 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
 
         try {
-            $data = $apartado->apartar((int) $_SESSION['idEstudiante'], (int) $_SESSION['idUsuario'], (array) ($input['equipos'] ?? []));
+            
+            if (!empty($input['modelos'])) {
+                $data = $apartado->apartarPorModelo((int) $_SESSION['idEstudiante'], (int) $_SESSION['idUsuario'], (array) $input['modelos']);
+            } else {
+                $data = $apartado->apartar((int) $_SESSION['idEstudiante'], (int) $_SESSION['idUsuario'], (array) ($input['equipos'] ?? []));
+            }
 
             $estados = array_column($data['prestamos'], 'estado');
             if (in_array('Solicitado', $estados, true) && in_array('Apartado', $estados, true)) {
@@ -59,7 +64,7 @@ switch ($method) {
         }
         break;
 
-    // permisos para aprobar y rechazar y entregar  solo los empleados
+   
     case 'PUT':
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
