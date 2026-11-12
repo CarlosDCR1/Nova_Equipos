@@ -84,13 +84,13 @@ window.Modulos.devolucion = {
             filtrar();
         });
 
-        // Al limpiar el formulario 
+      
         form.addEventListener("reset", () => setTimeout(() => {
             enEdicion = null;
             filtrar();
         }, 0));
 
-        // Cada vez que la tabla se recarga actualizamos qué préstamos siguen disponibles
+      
         new MutationObserver(() => {
             clearTimeout(temporizador);
             temporizador = setTimeout(refrescar, 150);

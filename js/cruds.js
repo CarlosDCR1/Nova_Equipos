@@ -1,10 +1,9 @@
 window.Crud = {
-   
+
     badge(valor) {
         const span = document.createElement("span");
         const v = String(valor ?? "").toUpperCase();
         const activo = v === "ACTIVO" || v === "1";
-        //const activo = (valor || "").toUpperCase() === "ACTIVO";
         span.className = "badge " + (activo ? "activo" : "inactivo");
         span.textContent = activo ? "Activo" : "Inactivo";
         return span;
@@ -59,20 +58,17 @@ window.Crud = {
                 const contCampos = $(".crud-campos");
                 const contPaginacion = $(".crud-paginacion");
 
-                const fuentes = {};      
+                const fuentes = {};
                 let idActual = "";
                 let filaActiva = null;
                 let temporizador;
 
-                // --------------------------------Paginacion-------------------- ----------
-                // aqui definimos de cuantos registros estara la paginacion
                 const POR_PAGINA = opcionesCrud.porPagina || 10;
-                let registros = [];   // todos los registros 
-                let pagina = 1;       // pagina actual
+                let registros = [];
+                let pagina = 1;
 
                 $(".crud-titulo").textContent = opcionesCrud.titulo;
 
-                // ---------- API ----------
                 async function peticion(metodo, body, params) {
                     const url = params && Object.keys(params).length
                         ? `${opcionesCrud.api}?${new URLSearchParams(params)}` : opcionesCrud.api;
@@ -86,14 +82,12 @@ window.Crud = {
                     return json;
                 }
 
-                // aqui cargamos las fuentes de datos de todos los cruds para los select
                 async function cargarFuentes() {
-                   
                     await Promise.all(Object.entries(opcionesCrud.fuentes || {}).map(async ([clave, fuente]) => {
                         try {
                             const res = await fetch(fuente.api);
                             const json = await res.json();
-                            if (json.code !== 1) throw new Error(json.message);    
+                            if (json.code !== 1) throw new Error(json.message);
                             fuentes[clave] = json.data || [];
                         } catch (e) {
                             fuentes[clave] = [];
@@ -108,19 +102,29 @@ window.Crud = {
                     if (def.fuente) {
                         const f = opcionesCrud.fuentes[def.fuente];
                         return (fuentes[def.fuente] || []).map((r) => ({ valor: r[f.valor], texto: leerTexto(f, r) }));
-                        //return (fuentes[def.fuente] || []).map((r) => ({ valor: r[f.valor], texto: r[f.texto] }));
                     }
                     return def.opciones || [];
-                   
                 }
 
                 function textoDeFuente(clave, id) {
-                const f = opcionesCrud.fuentes[clave];
-                const r = (fuentes[clave] || []).find((x) => String(x[f.valor]) === String(id));
-                return r ? leerTexto(f, r) : id;
-            }
+                    const f = opcionesCrud.fuentes[clave];
+                    const r = (fuentes[clave] || []).find((x) => String(x[f.valor]) === String(id));
+                    return r ? leerTexto(f, r) : id;
+                }
 
-                // Awui creamos ya lo que va en el html pero manipulado de forma general para todos los crud
+                function activarBusqueda(control, def) {
+                    if (!def.buscable || typeof TomSelect === "undefined") return;
+                    new TomSelect(control, {
+                        create: false,
+                        maxOptions: 100,
+                        allowEmptyOption: true
+                    });
+                }
+
+                function asignar(control, valor) {
+                    if (control.tomselect) control.tomselect.setValue(valor, true);
+                    else control.value = valor;
+                }
 
                 function crearCampo(def, prefijo) {
                     const id = `${prefijo}-${def.name || def.clave}`;
@@ -141,7 +145,6 @@ window.Crud = {
                         control.type = def.tipo || "text";
                         if (def.maxlength) control.maxLength = def.maxlength;
                         if (def.placeholder) control.placeholder = def.placeholder;
-                       
                         if (def.pattern) control.pattern = def.pattern;
                         if (def.min) control.min = def.min;
                         if (def.max) control.max = def.max;
@@ -152,10 +155,10 @@ window.Crud = {
                     if (def.required) control.required = true;
 
                     wrap.append(label, control);
+                    activarBusqueda(control, def);
                     return { wrap, control };
                 }
 
-                // para el buscador y los filtros definidos en el admin o controlador 
                 const bCampo = document.createElement("select");
                 const bTexto = document.createElement("input");
                 const filtrosExtra = [];
@@ -184,7 +187,6 @@ window.Crud = {
                     });
                 }
 
-                // Formulario
                 const controlesForm = [];
                 function construirFormulario() {
                     opcionesCrud.campos.forEach((def) => {
@@ -196,7 +198,6 @@ window.Crud = {
                     });
                 }
 
-                // encabezado 
                 function construirCabecera() {
                     const thead = $(".crud-thead");
                     opcionesCrud.columnas.forEach((c) => {
@@ -206,7 +207,6 @@ window.Crud = {
                     });
                 }
 
-                // tabla 
                 function mensaje(clase, texto) {
                     tbody.innerHTML = "";
                     contPaginacion.style.display = "none";
@@ -239,11 +239,8 @@ window.Crud = {
                     return f;
                 }
 
-                // ---------- PAGINACIÓN: funciones ----------
                 const totalPaginas = () => Math.max(1, Math.ceil(registros.length / POR_PAGINA));
 
-                // Actualiza los textos y botones
-                // si la tablano tiene tantos registros los va a ocultar 
                 function actualizarPaginacion() {
                     const total = registros.length;
                     if (total <= POR_PAGINA) {
@@ -259,7 +256,6 @@ window.Crud = {
                     contPaginacion.style.display = "flex";
                 }
 
-                // Coloca en la tabla solo los registros de la página actual
                 function dibujarPagina() {
                     tbody.innerHTML = "";
                     filaActiva = null;
@@ -280,11 +276,10 @@ window.Crud = {
                     const nueva = Math.min(Math.max(1, n), totalPaginas());
                     if (nueva === pagina) return;
                     pagina = nueva;
-                    if (idActual) limpiar(); // la fila seleccionada ya no se ve: se limpia el formulario
+                    if (idActual) limpiar();
                     dibujarPagina();
                 }
 
-                // en una búsqueda vuelve a la página 1
                 async function cargar(conservarPagina = false) {
                     mensaje("empty-state", `Cargando ${opcionesCrud.plural}...`);
                     try {
@@ -297,7 +292,6 @@ window.Crud = {
                     }
                 }
 
-                // --------LIMPIAR ----------
                 function estadoBotones(haySeleccion) {
                     btn("agregar").disabled = haySeleccion;
                     btn("editar").disabled = !haySeleccion;
@@ -311,7 +305,7 @@ window.Crud = {
 
                     idActual = fila[opcionesCrud.id] ?? "";
                     controlesForm.forEach(({ def, control }) => {
-                        control.value = fila[def.name] ?? def.defecto ?? "";
+                        asignar(control, fila[def.name] ?? def.defecto ?? "");
                     });
                     estadoBotones(true);
                 }
@@ -320,7 +314,8 @@ window.Crud = {
                     form.reset();
                     idActual = "";
                     controlesForm.forEach(({ def, control }) => {
-                        if (def.defecto !== undefined) control.value = def.defecto;
+                        if (def.defecto !== undefined) asignar(control, def.defecto);
+                        else if (control.tomselect) control.tomselect.setValue("", true);
                     });
                     if (filaActiva) filaActiva.classList.remove("selected");
                     filaActiva = null;
@@ -333,7 +328,6 @@ window.Crud = {
                     return datos;
                 }
 
-                // ---------- ACCIONES ----------
                 async function ejecutar(metodo, body) {
                     try {
                         await peticion(metodo, body);
@@ -361,9 +355,8 @@ window.Crud = {
                     ejecutar("DELETE", { id: idActual });
                 }
 
-                // ---------- EVENTOS ----------
                 form.addEventListener("submit", (e) => e.preventDefault());
-                
+
                 btn("agregar").addEventListener("click", agregar);
                 btn("editar").addEventListener("click", editar);
                 btn("eliminar").addEventListener("click", eliminar);
@@ -374,7 +367,7 @@ window.Crud = {
                 btn("limpiar-busqueda").addEventListener("click", () => {
                     bCampo.selectedIndex = 0;
                     bTexto.value = "";
-                    filtrosExtra.forEach((c) => (c.value = ""));
+                    filtrosExtra.forEach((c) => asignar(c, ""));
                     cargar();
                 });
 
@@ -383,9 +376,8 @@ window.Crud = {
                     temporizador = setTimeout(() => cargar(), 350);
                 });
 
-                // ---------- INICIO ----------
                 mensaje("empty-state", `Cargando ${opcionesCrud.plural}...`);
-                
+
                 await cargarFuentes();
                 construirBuscador();
                 construirFormulario();
