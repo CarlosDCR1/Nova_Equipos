@@ -9,6 +9,7 @@ Sesion::requerirPagina();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nova Equipos</title>
+    <link rel="icon" type="image/png" href="./Resources/Logo_NovaEquipos.png?v=<?= filemtime('Resources/Logo_NovaEquipos.png') ?>">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.default.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <link rel="stylesheet" href="css/panel_navegador.css?v=<?= filemtime('css/panel_navegador.css') ?>">

@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__ . "/Apartado.php"); 
+require_once(__DIR__ . "/Apartado.php");
 
 class Dashboard
 {
@@ -10,7 +10,6 @@ class Dashboard
         $this->connection = $connection;
     }
 
-    
     public function paraEstudiante(int $idEstudiante): array
     {
         $statement = $this->connection->prepare(
@@ -55,10 +54,8 @@ class Dashboard
         ];
     }
 
-  
-    public function paraPersonal(bool $esAdmin): array
+    public function paraPersonal(bool $esAdmin, ?string $desde = null, ?string $hasta = null): array
     {
-      
         $equipos = $this->connection->query(
             "SELECT COUNT(*) AS total,
                     COALESCE(SUM(CASE WHEN " . Apartado::prestado() . " THEN 1 ELSE 0 END), 0) AS prestados,
@@ -77,7 +74,6 @@ class Dashboard
                              AND NOT EXISTS (SELECT 1 FROM detalle_devolucion dd WHERE dd.id_detalle_prestamo = dp.id_detalle_prestamo))"
         )->fetch(PDO::FETCH_ASSOC);
 
-        
         $pendientes = $this->connection->query(
             "SELECT COALESCE(SUM(ep.nombre_estado = 'Solicitado'), 0) AS por_aprobar,
                     COALESCE(SUM(ep.nombre_estado = 'Apartado'), 0) AS por_recoger
@@ -85,7 +81,6 @@ class Dashboard
              WHERE ep.nombre_estado IN ('Solicitado', 'Apartado') AND p.apartado_hasta >= NOW()"
         )->fetch(PDO::FETCH_ASSOC);
 
-        // Stock por modelo, de menos a más
         $stock = $this->connection->query(
             "SELECT mp.nombre_modelo_producto AS modelo,
                     cp.nombre_categoria_producto AS categoria,
@@ -112,6 +107,7 @@ class Dashboard
             'equipos'   => array_map('intval', $equipos),
             'prestamos' => array_map('intval', $prestamos + $pendientes),
             'stock'     => $stock,
+            'graficas'  => $this->graficasPersonal($desde, $hasta),
         ];
 
         if ($esAdmin) {
@@ -125,5 +121,97 @@ class Dashboard
         }
 
         return $data;
+    }
+
+    private function graficasPersonal(?string $desde, ?string $hasta): array
+    {
+        $fin = new DateTime($hasta ?: 'today');
+        $inicio = $desde ? new DateTime($desde) : (new DateTime('first day of this month'))->modify('-7 month');
+        $inicio->setTime(0, 0);
+        $fin->setTime(0, 0);
+
+        $porDia = ($inicio->diff($fin)->days + 1) <= 31;
+        $desdeSql = $inicio->format('Y-m-d');
+        $hastaSql = (clone $fin)->modify('+1 day')->format('Y-m-d');
+        $formato = $porDia ? '%Y-%m-%d' : '%Y-%m';
+
+        $periodos = [];
+        if ($porDia) {
+            for ($d = clone $inicio; $d <= $fin; $d->modify('+1 day')) {
+                $k = $d->format('Y-m-d');
+                $periodos[$k] = ['fecha' => $k, 'prestamos' => 0, 'devoluciones' => 0];
+            }
+        } else {
+            for ($d = new DateTime($inicio->format('Y-m-01')); $d <= $fin; $d->modify('+1 month')) {
+                $k = $d->format('Y-m');
+                $periodos[$k] = ['fecha' => $k, 'prestamos' => 0, 'devoluciones' => 0];
+            }
+        }
+
+        $statement = $this->connection->prepare(
+            "SELECT DATE_FORMAT(p.fecha_prestamo, '$formato') AS periodo, COUNT(*) AS total
+             FROM prestamo p JOIN estado_prestamo ep ON ep.id_estado_prestamo = p.id_estado_prestamo
+             WHERE ep.nombre_estado IN ('Activo', 'Vencido', 'Devuelto')
+               AND p.fecha_prestamo >= :desde AND p.fecha_prestamo < :hasta
+             GROUP BY periodo");
+        $statement->execute([':desde' => $desdeSql, ':hasta' => $hastaSql]);
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $f) {
+            if (isset($periodos[$f['periodo']])) {
+                $periodos[$f['periodo']]['prestamos'] = (int) $f['total'];
+            }
+        }
+
+        $statement = $this->connection->prepare(
+            "SELECT DATE_FORMAT(fecha_devolucion, '$formato') AS periodo, COUNT(*) AS total
+             FROM devolucion
+             WHERE fecha_devolucion >= :desde AND fecha_devolucion < :hasta
+             GROUP BY periodo");
+        $statement->execute([':desde' => $desdeSql, ':hasta' => $hastaSql]);
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $f) {
+            if (isset($periodos[$f['periodo']])) {
+                $periodos[$f['periodo']]['devoluciones'] = (int) $f['total'];
+            }
+        }
+
+        $statement = $this->connection->prepare(
+            "SELECT ep.nombre_estado AS estado, COUNT(p.id_prestamo) AS total
+             FROM estado_prestamo ep
+             LEFT JOIN prestamo p ON p.id_estado_prestamo = ep.id_estado_prestamo
+                                 AND p.fecha_prestamo >= :desde AND p.fecha_prestamo < :hasta
+             GROUP BY ep.id_estado_prestamo, ep.nombre_estado
+             ORDER BY ep.id_estado_prestamo");
+        $statement->execute([':desde' => $desdeSql, ':hasta' => $hastaSql]);
+        $estados = $statement->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($estados as &$e) {
+            $e['total'] = (int) $e['total'];
+        }
+        unset($e);
+
+        $categorias = $this->connection->query(
+            "SELECT cp.nombre_categoria_producto AS categoria,
+                    COUNT(e.id_equipo) AS total,
+                    COALESCE(SUM(CASE WHEN ee.permite_prestamo = 1 AND NOT " . Apartado::ocupado() . " THEN 1 ELSE 0 END), 0) AS disponibles
+             FROM categoria_producto cp
+             JOIN modelo_producto mp ON mp.id_categoria_producto = cp.id_categoria_producto
+             JOIN equipo e ON e.id_modelo_producto = mp.id_modelo_producto
+             JOIN estado_equipo ee ON ee.id_estado_equipo = e.id_estado_equipo
+             WHERE cp.is_active = 1
+             GROUP BY cp.id_categoria_producto, cp.nombre_categoria_producto
+             ORDER BY total DESC, categoria ASC
+             LIMIT 8"
+        )->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($categorias as &$c) {
+            $c['total'] = (int) $c['total'];
+            $c['disponibles'] = (int) $c['disponibles'];
+        }
+        unset($c);
+
+        return [
+            'agrupacion' => $porDia ? 'dia' : 'mes',
+            'rango'      => ['desde' => $desdeSql, 'hasta' => $fin->format('Y-m-d')],
+            'periodos'   => array_values($periodos),
+            'estados'    => $estados,
+            'categorias' => $categorias,
+        ];
     }
 }
