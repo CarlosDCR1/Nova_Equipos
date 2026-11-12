@@ -12,7 +12,6 @@ $conection = new Connection();
 $response = new Response();
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Comprueba que la fecha tenga formato Y-m-d y sea una fecha real
 function fechaValida(mixed $fecha): bool
 {
     $texto = trim((string) $fecha);

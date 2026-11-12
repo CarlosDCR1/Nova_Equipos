@@ -7,9 +7,9 @@ class ReglaApartado extends Exception
 
 class Apartado
 {
-    const HORAS_APARTADO   = 24;     // plazo para recoger un apartado
-    const HORAS_SOLICITUD  = 48;     // plazo para que un empleado responda una solicitud
-    const MAX_EQUIPOS      = 3;      // equipos que un estudiante puede tener a la vez (apartados + entregados)
+    const HORAS_APARTADO   = 24;  
+    const HORAS_SOLICITUD  = 48;  
+    const MAX_EQUIPOS      = 3;      
     const MONTO_APROBACION = 8000;
     const DIAS_PRESTAMO    = 7;
 
@@ -20,12 +20,7 @@ class Apartado
         $this->connection = $connection;
     }
 
-    // ------------------------------------------------------------------
-    // SQL compartido con el panel (Dashboard) para que los dos cuenten igual
-    // ------------------------------------------------------------------
-
-    // El equipo (alias e) tiene una línea de préstamo SIN devolución en alguno de esos estados.
-    // Una solicitud o un apartado solo cuentan mientras no pase su plazo (apartado_hasta).
+   
     public static function enPrestamo(array $estados): string
     {
         $lista = "'" . implode("','", $estados) . "'";
@@ -39,129 +34,119 @@ class Apartado
               AND NOT EXISTS (SELECT 1 FROM detalle_devolucion dd WHERE dd.id_detalle_prestamo = dp.id_detalle_prestamo))";
     }
 
-    // ya se entregó al estudiante
+    
     public static function prestado(): string
     {
         return self::enPrestamo(['Activo', 'Vencido']);
     }
 
-    // entregado o apartado: no se puede ofrecer a otro estudiante
+    
     public static function ocupado(): string
     {
         return self::enPrestamo(['Solicitado', 'Apartado', 'Activo', 'Vencido']);
     }
 
-    // línea del préstamo (alias p) que todavía no tiene devolución
+   
     private const LINEA_SIN_DEVOLVER = "EXISTS (
             SELECT 1 FROM detalle_prestamo dp
             WHERE dp.id_prestamo = p.id_prestamo
               AND NOT EXISTS (SELECT 1 FROM detalle_devolucion dd WHERE dd.id_detalle_prestamo = dp.id_detalle_prestamo))";
 
-    // ------------------------------------------------------------------
-    // ESTUDIANTE: apartar, cancelar, ver
-    // ------------------------------------------------------------------
-
-    // Una sola solicitud del estudiante, que el sistema divide en hasta dos préstamos:
-    // - equipos de hasta 8,000: préstamo "Apartado" al instante, con 24 horas para recoger
-    // - equipos de más de 8,000: préstamo "Solicitado", espera la aprobación de un empleado
-    // Así el equipo barato no espera por el caro, y si rechazan el caro no se pierde el otro.
     public function apartar(int $idEstudiante, int $idUsuario, array $idEquipos): array
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $idEquipos), fn ($i) => $i > 0)));
-        sort($ids); // siempre en el mismo orden, así dos estudiantes no se bloquean entre sí
+        sort($ids);
         if (!$ids) {
             throw new ReglaApartado("Selecciona al menos un equipo");
         }
 
-        return $this->enTransaccion(function () use ($idEstudiante, $idUsuario, $ids) {
-            $this->liberarVencidos();
-
-            // se bloquea al estudiante: dos peticiones suyas a la vez no pueden pasar del límite
-            $st = $this->connection->prepare(
-                "SELECT id_carrera, estado_estudiante FROM estudiante WHERE id_estudiante = :id FOR UPDATE");
-            $st->execute([':id' => $idEstudiante]);
-            $est = $st->fetch(PDO::FETCH_ASSOC);
-            if (!$est || $est['estado_estudiante'] !== 'ACTIVO') {
-                throw new ReglaApartado("Tu cuenta de estudiante no está activa");
-            }
-
-            // el límite cuenta EQUIPOS, no préstamos (si no, dividir la solicitud lo esquivaría)
-            $abiertos = $this->contarEquiposAbiertos($idEstudiante);
-            if ($abiertos + count($ids) > self::MAX_EQUIPOS) {
-                throw new ReglaApartado("Puedes tener hasta " . self::MAX_EQUIPOS . " equipos a la vez y ya tienes $abiertos. Devuelve o cancela alguno para pedir más");
-            }
-            if ($this->tieneVencido($idEstudiante)) {
-                throw new ReglaApartado("Tienes un préstamo vencido. Devuélvelo antes de pedir otro equipo");
-            }
-
-            $baratos = [];
-            $caros = [];
-            foreach ($ids as $idEquipo) {
-                // se bloquea el equipo: dos estudiantes no pueden apartar la misma unidad
-                $st = $this->connection->prepare(
-                    "SELECT codigo_inventario, id_modelo_producto, id_estado_equipo, valor_adquisicion
-                     FROM equipo WHERE id_equipo = :id FOR UPDATE");
-                $st->execute([':id' => $idEquipo]);
-                $eq = $st->fetch(PDO::FETCH_ASSOC);
-                if (!$eq) {
-                    throw new ReglaApartado("El equipo seleccionado no existe");
-                }
-
-                $st = $this->connection->prepare("SELECT permite_prestamo FROM estado_equipo WHERE id_estado_equipo = :e");
-                $st->execute([':e' => $eq['id_estado_equipo']]);
-                if (!$st->fetchColumn()) {
-                    throw new ReglaApartado("El equipo {$eq['codigo_inventario']} no está disponible");
-                }
-
-                // solo equipos de las categorías de su carrera
-                $st = $this->connection->prepare(
-                    "SELECT 1 FROM carrera_categoria cc
-                     JOIN categoria_producto cp ON cp.id_categoria_producto = cc.id_categoria_producto AND cp.is_active = 1
-                     JOIN modelo_producto mp ON mp.id_categoria_producto = cp.id_categoria_producto AND mp.is_active = 1
-                     WHERE cc.id_carrera = :carrera AND mp.id_modelo_producto = :modelo");
-                $st->execute([':carrera' => $est['id_carrera'], ':modelo' => $eq['id_modelo_producto']]);
-                if (!$st->fetchColumn()) {
-                    throw new ReglaApartado("El equipo {$eq['codigo_inventario']} no corresponde a tu carrera");
-                }
-
-                $st = $this->connection->prepare("SELECT 1 FROM equipo e WHERE e.id_equipo = :id AND " . self::ocupado());
-                $st->execute([':id' => $idEquipo]);
-                if ($st->fetchColumn()) {
-                    throw new ReglaApartado("El equipo {$eq['codigo_inventario']} ya fue apartado o está prestado");
-                }
-
-                if ($eq['valor_adquisicion'] !== null && (float) $eq['valor_adquisicion'] > self::MONTO_APROBACION) {
-                    $caros[] = $idEquipo;
-                } else {
-                    $baratos[] = $idEquipo;
-                }
-            }
-
-            $prestamos = [];
-            if ($baratos) {
-                $prestamos[] = $this->crearPrestamo($idEstudiante, $idUsuario, $baratos, 'Apartado', self::HORAS_APARTADO);
-            }
-            if ($caros) {
-                $prestamos[] = $this->crearPrestamo($idEstudiante, $idUsuario, $caros, 'Solicitado', self::HORAS_SOLICITUD);
-            }
-
-            return ['prestamos' => $prestamos, 'requiere_aprobacion' => (bool) $caros];
-        });
+        return $this->enTransaccion(fn () => $this->apartarEquipos($idEstudiante, $idUsuario, $ids));
     }
 
-        public function abiertos(int $idEstudiante): int
+    
+    private function apartarEquipos(int $idEstudiante, int $idUsuario, array $ids): array
     {
         $this->liberarVencidos();
-        return $this->contarEquiposAbiertos($idEstudiante);
+
+        
+        $st = $this->connection->prepare(
+            "SELECT id_carrera, estado_estudiante FROM estudiante WHERE id_estudiante = :id FOR UPDATE");
+        $st->execute([':id' => $idEstudiante]);
+        $est = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$est || $est['estado_estudiante'] !== 'ACTIVO') {
+            throw new ReglaApartado("Tu cuenta de estudiante no está activa");
+        }
+
+        
+        $abiertos = $this->contarEquiposAbiertos($idEstudiante);
+        if ($abiertos + count($ids) > self::MAX_EQUIPOS) {
+            throw new ReglaApartado("Puedes tener hasta " . self::MAX_EQUIPOS . " equipos a la vez y ya tienes $abiertos. Devuelve o cancela alguno para pedir más");
+        }
+        if ($this->tieneVencido($idEstudiante)) {
+            throw new ReglaApartado("Tienes un préstamo vencido. Devuélvelo antes de pedir otro equipo");
+        }
+
+        $baratos = [];
+        $caros = [];
+        foreach ($ids as $idEquipo) {
+            
+            $st = $this->connection->prepare(
+                "SELECT codigo_inventario, id_modelo_producto, id_estado_equipo, valor_adquisicion
+                 FROM equipo WHERE id_equipo = :id FOR UPDATE");
+            $st->execute([':id' => $idEquipo]);
+            $eq = $st->fetch(PDO::FETCH_ASSOC);
+            if (!$eq) {
+                throw new ReglaApartado("El equipo seleccionado no existe");
+            }
+
+            $st = $this->connection->prepare("SELECT permite_prestamo FROM estado_equipo WHERE id_estado_equipo = :e");
+            $st->execute([':e' => $eq['id_estado_equipo']]);
+            if (!$st->fetchColumn()) {
+                throw new ReglaApartado("El equipo {$eq['codigo_inventario']} no está disponible");
+            }
+
+            
+            $st = $this->connection->prepare(
+                "SELECT 1 FROM carrera_categoria cc
+                 JOIN categoria_producto cp ON cp.id_categoria_producto = cc.id_categoria_producto AND cp.is_active = 1
+                 JOIN modelo_producto mp ON mp.id_categoria_producto = cp.id_categoria_producto AND mp.is_active = 1
+                 WHERE cc.id_carrera = :carrera AND mp.id_modelo_producto = :modelo");
+            $st->execute([':carrera' => $est['id_carrera'], ':modelo' => $eq['id_modelo_producto']]);
+            if (!$st->fetchColumn()) {
+                throw new ReglaApartado("El equipo {$eq['codigo_inventario']} no corresponde a tu carrera");
+            }
+
+            $st = $this->connection->prepare("SELECT 1 FROM equipo e WHERE e.id_equipo = :id AND " . self::ocupado());
+            $st->execute([':id' => $idEquipo]);
+            if ($st->fetchColumn()) {
+                throw new ReglaApartado("El equipo {$eq['codigo_inventario']} ya fue apartado o está prestado");
+            }
+
+            if ($eq['valor_adquisicion'] !== null && (float) $eq['valor_adquisicion'] > self::MONTO_APROBACION) {
+                $caros[] = $idEquipo;
+            } else {
+                $baratos[] = $idEquipo;
+            }
+        }
+
+        $prestamos = [];
+        if ($baratos) {
+            $prestamos[] = $this->crearPrestamo($idEstudiante, $idUsuario, $baratos, 'Apartado', self::HORAS_APARTADO);
+        }
+        if ($caros) {
+            $prestamos[] = $this->crearPrestamo($idEstudiante, $idUsuario, $caros, 'Solicitado', self::HORAS_SOLICITUD);
+        }
+
+        return ['prestamos' => $prestamos, 'requiere_aprobacion' => (bool) $caros];
     }
 
-    // Crea un préstamo con sus líneas. Se usa solo dentro de la transacción de apartar().
+  
     private function crearPrestamo(int $idEstudiante, int $idUsuario, array $idEquipos, string $estado, int $horas): array
     {
         $h = (int) $horas;
         $d = (int) self::DIAS_PRESTAMO;
 
-        // fecha_devolucion_programada es provisional: al entregar se recalcula desde ese día
+       
         $st = $this->connection->prepare(
             "INSERT INTO prestamo (id_estudiante, id_estado_prestamo, id_usuario_registro, fecha_prestamo,
                                    apartado_hasta, fecha_devolucion_programada)
@@ -186,7 +171,7 @@ class Apartado
         ];
     }
 
-    // El estudiante cancela su propio apartado o solicitud ($idEstudiante = null: lo cancela un empleado)
+    
     public function cancelar(int $idPrestamo, ?int $idEstudiante = null): array
     {
         return $this->enTransaccion(function () use ($idPrestamo, $idEstudiante) {
@@ -205,7 +190,7 @@ class Apartado
         });
     }
 
-    // Equipos que el estudiante puede apartar ahora (de las categorías de su carrera)
+   
     public function disponibles(int $idEstudiante): array
     {
         $st = $this->connection->prepare(
@@ -229,7 +214,113 @@ class Apartado
         return $filas;
     }
 
-    // Préstamos del estudiante, el más nuevo primero
+
+    public function apartarPorModelo(int $idEstudiante, int $idUsuario, array $pedidos): array
+    {
+        $cantidades = []; 
+        foreach ($pedidos as $p) {
+            $idModelo = (int) ($p['id_modelo_producto'] ?? 0);
+            $cantidad = (int) ($p['cantidad'] ?? 0);
+            $apr = !empty($p['requiere_aprobacion']) ? 1 : 0;
+            if ($idModelo > 0 && $cantidad > 0) {
+                $k = "$idModelo|$apr";
+                $cantidades[$k] = ['modelo' => $idModelo, 'apr' => $apr, 'cantidad' => ($cantidades[$k]['cantidad'] ?? 0) + $cantidad];
+            }
+        }
+        if (!$cantidades) {
+            throw new ReglaApartado("Selecciona al menos un equipo");
+        }
+        if (array_sum(array_column($cantidades, 'cantidad')) > self::MAX_EQUIPOS) {
+            throw new ReglaApartado("Puedes apartar hasta " . self::MAX_EQUIPOS . " equipos a la vez");
+        }
+
+        return $this->enTransaccion(function () use ($idEstudiante, $idUsuario, $cantidades) {
+            $this->liberarVencidos();
+
+            $st = $this->connection->prepare("SELECT id_carrera FROM estudiante WHERE id_estudiante = :id FOR UPDATE");
+            $st->execute([':id' => $idEstudiante]);
+            $carrera = $st->fetchColumn();
+            if (!$carrera) {
+                throw new ReglaApartado("No se encontró tu cuenta de estudiante");
+            }
+
+            $ids = [];
+            foreach ($cantidades as $c) {
+                $n = (int) $c['cantidad'];
+                $idModelo = (int) $c['modelo'];
+                $apr = (int) $c['apr'];
+                $st = $this->connection->prepare(
+                    "SELECT e.id_equipo
+                     FROM equipo e
+                     JOIN estado_equipo ee ON ee.id_estado_equipo = e.id_estado_equipo AND ee.permite_prestamo = 1
+                     JOIN modelo_producto mp ON mp.id_modelo_producto = e.id_modelo_producto AND mp.is_active = 1
+                     JOIN categoria_producto cp ON cp.id_categoria_producto = mp.id_categoria_producto AND cp.is_active = 1
+                     JOIN carrera_categoria cc ON cc.id_categoria_producto = cp.id_categoria_producto AND cc.id_carrera = :carrera
+                     WHERE e.id_modelo_producto = :modelo AND NOT " . self::ocupado() . "
+                       AND (e.valor_adquisicion IS NOT NULL AND e.valor_adquisicion > " . (float) self::MONTO_APROBACION . ") = $apr
+                     ORDER BY RAND()
+                     LIMIT $n");
+                $st->execute([':carrera' => $carrera, ':modelo' => $idModelo]);
+                $libres = $st->fetchAll(PDO::FETCH_COLUMN);
+
+                if (count($libres) < $n) {
+                    $st = $this->connection->prepare("SELECT nombre_modelo_producto FROM modelo_producto WHERE id_modelo_producto = :id");
+                    $st->execute([':id' => $idModelo]);
+                    $nombre = $st->fetchColumn();
+                    if ($nombre === false) {
+                        throw new ReglaApartado("El modelo seleccionado no existe");
+                    }
+                    $tipo = $apr ? "que requieren aprobación" : "de entrega inmediata";
+                    throw new ReglaApartado("Solo quedan " . count($libres) . " unidades de $nombre $tipo. Actualiza la lista e inténtalo de nuevo");
+                }
+                foreach ($libres as $idEquipo) {
+                    $ids[] = (int) $idEquipo;
+                }
+            }
+
+            sort($ids);
+            return $this->apartarEquipos($idEstudiante, $idUsuario, $ids);
+        });
+    }
+
+   
+    public function modelosDisponibles(int $idEstudiante): array
+    {
+        $st = $this->connection->prepare(
+            "SELECT mp.id_modelo_producto, mp.nombre_modelo_producto AS modelo,
+                    ma.nombre_marca AS marca, mp.descripcion_modelo_producto AS descripcion,
+                    cp.id_categoria_producto, cp.nombre_categoria_producto AS categoria,
+                    COUNT(*) AS disponibles,
+                    COALESCE(SUM(e.valor_adquisicion IS NOT NULL AND e.valor_adquisicion > " . (float) self::MONTO_APROBACION . "), 0) AS con_aprobacion
+             FROM estudiante s
+             JOIN carrera_categoria cc ON cc.id_carrera = s.id_carrera
+             JOIN categoria_producto cp ON cp.id_categoria_producto = cc.id_categoria_producto AND cp.is_active = 1
+             JOIN modelo_producto mp ON mp.id_categoria_producto = cp.id_categoria_producto AND mp.is_active = 1
+             JOIN marca ma ON ma.id_marca = mp.id_marca
+             JOIN equipo e ON e.id_modelo_producto = mp.id_modelo_producto
+             JOIN estado_equipo ee ON ee.id_estado_equipo = e.id_estado_equipo AND ee.permite_prestamo = 1
+             WHERE s.id_estudiante = :id AND NOT " . self::ocupado() . "
+             GROUP BY mp.id_modelo_producto, mp.nombre_modelo_producto, ma.nombre_marca, mp.descripcion_modelo_producto,
+                      cp.id_categoria_producto, cp.nombre_categoria_producto
+             ORDER BY cp.nombre_categoria_producto, mp.nombre_modelo_producto");
+        $st->execute([':id' => $idEstudiante]);
+        $filas = $st->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($filas as &$f) {
+            $f['id_modelo_producto'] = (int) $f['id_modelo_producto'];
+            $f['id_categoria_producto'] = (int) $f['id_categoria_producto'];
+            $f['disponibles'] = (int) $f['disponibles'];
+            $f['con_aprobacion'] = (int) $f['con_aprobacion'];
+        }
+        return $filas;
+    }
+
+    public function abiertos(int $idEstudiante): int
+    {
+        $this->liberarVencidos();
+        return $this->contarEquiposAbiertos($idEstudiante);
+    }
+
+
     public function misPrestamos(int $idEstudiante): array
     {
         $this->liberarVencidos();
@@ -242,11 +333,6 @@ class Apartado
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ------------------------------------------------------------------
-    // EMPLEADO: aprobar, rechazar, entregar, ver pendientes
-    // ------------------------------------------------------------------
-
-    // Aprueba una solicitud (equipo de más de 8,000). Desde aquí corren otras 24 horas para recoger.
     public function aprobar(int $idPrestamo, int $idUsuario): array
     {
         return $this->enTransaccion(function () use ($idPrestamo, $idUsuario) {
@@ -266,7 +352,7 @@ class Apartado
         });
     }
 
-    // Rechaza una solicitud o un apartado (por ejemplo, al recoger el equipo).
+   
     public function rechazar(int $idPrestamo, ?string $motivo = null): array
     {
         return $this->enTransaccion(function () use ($idPrestamo, $motivo) {
@@ -281,7 +367,7 @@ class Apartado
         });
     }
 
-    // El estudiante llegó por el equipo: el empleado de la sesión queda como quien lo entregó.
+   
     public function entregar(int $idPrestamo, int $idUsuario): array
     {
         return $this->enTransaccion(function () use ($idPrestamo, $idUsuario) {
@@ -317,7 +403,7 @@ class Apartado
                  WHERE id_prestamo = :id");
             $st->execute([':estado' => $this->idEstadoPrestamo('Activo'), ':usr' => $idUsuario, ':id' => $idPrestamo]);
 
-            // los equipos pasan a "Prestado"
+            
             $idPrestado = $this->idEstadoEquipo('Prestado');
             $st = $this->connection->prepare("UPDATE equipo SET id_estado_equipo = :estado WHERE id_equipo = :id");
             foreach ($equipos as $idEquipo) {
@@ -330,7 +416,7 @@ class Apartado
         });
     }
 
-    // Solicitudes por aprobar y apartados por recoger (solo los vigentes)
+  
     public function pendientes(): array
     {
         $this->liberarVencidos();
@@ -346,11 +432,6 @@ class Apartado
         )->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // ------------------------------------------------------------------
-    // Soporte
-    // ------------------------------------------------------------------
-
-    // Cancela las solicitudes y apartados cuyo plazo ya pasó (así el equipo vuelve a quedar libre)
     public function liberarVencidos(): int
     {
         $st = $this->connection->prepare(
@@ -363,14 +444,14 @@ class Apartado
         return $st->rowCount();
     }
 
-    // texto con los equipos de un préstamo (alias p): "Lenovo Slim (1152), Pantalla hd (01001)"
+
     private const EQUIPOS_TEXTO = "(SELECT GROUP_CONCAT(CONCAT(mp.nombre_modelo_producto, ' (', e.codigo_inventario, ')') SEPARATOR ', ')
             FROM detalle_prestamo dp
             JOIN equipo e ON e.id_equipo = dp.id_equipo
             JOIN modelo_producto mp ON mp.id_modelo_producto = e.id_modelo_producto
             WHERE dp.id_prestamo = p.id_prestamo)";
 
-    // equipos que el estudiante tiene ahora: apartados/solicitados vigentes y entregados sin devolver
+ 
     private function contarEquiposAbiertos(int $idEstudiante): int
     {
         $st = $this->connection->prepare(
@@ -396,7 +477,7 @@ class Apartado
         return (int) $st->fetchColumn() > 0;
     }
 
-    // trae el préstamo bloqueado para que nadie más lo cambie a la vez
+    
     private function bloquear(int $idPrestamo): array
     {
         $st = $this->connection->prepare(
@@ -444,8 +525,6 @@ class Apartado
 
     private function enTransaccion(callable $accion)
     {
-        // READ COMMITTED: cada consulta ve lo ultimo confirmado. Con el nivel por defecto, una consulta normal
-        // posterior a esperar el bloqueo de un equipo podria no ver el apartado que otro estudiante acaba de confirmar.
         $this->connection->exec("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
         $this->connection->beginTransaction();
         try {

@@ -1,6 +1,5 @@
 <?php
 require_once(__DIR__ . "/Apartado.php"); 
-//esto es para la vista del estudiante 
 
 class Dashboard
 {
@@ -11,7 +10,7 @@ class Dashboard
         $this->connection = $connection;
     }
 
-    //select para equipos disponibles según su carrera
+    
     public function paraEstudiante(int $idEstudiante): array
     {
         $statement = $this->connection->prepare(
@@ -24,7 +23,7 @@ class Dashboard
         $categorias = [];
         if ($carrera) {
             $statement = $this->connection->prepare(
-                "SELECT cp.nombre_categoria_producto AS categoria,
+                "SELECT cp.id_categoria_producto AS id_categoria, cp.nombre_categoria_producto AS categoria,
                         COUNT(e.id_equipo) AS total,
                         COALESCE(SUM(CASE WHEN ee.permite_prestamo = 1 AND NOT " . Apartado::ocupado() . " THEN 1 ELSE 0 END), 0) AS disponibles
                  FROM carrera_categoria cc
@@ -41,22 +40,25 @@ class Dashboard
 
         $totalDisponibles = 0;
         foreach ($categorias as &$c) {
+            $c['id_categoria'] = (int) $c['id_categoria'];
             $c['total'] = (int) $c['total'];
             $c['disponibles'] = (int) $c['disponibles'];
             $totalDisponibles += $c['disponibles'];
         }
-        unset($c); return [ 'tipo' => 'estudiante',
-            'carrera' => $carrera['nombre_carrera'] ?? null,
+        unset($c);
+
+        return [
+            'tipo'              => 'estudiante',
+            'carrera'           => $carrera['nombre_carrera'] ?? null,
             'total_disponibles' => $totalDisponibles,
-            'categorias' => $categorias,
+            'categorias'        => $categorias,
         ];
     }
 
-    // Vista del administrador y del empleado: resumen de equipos, préstamos y stock
-    // El administrador además ve la cantidad de usuarios
+  
     public function paraPersonal(bool $esAdmin): array
     {
-       
+      
         $equipos = $this->connection->query(
             "SELECT COUNT(*) AS total,
                     COALESCE(SUM(CASE WHEN " . Apartado::prestado() . " THEN 1 ELSE 0 END), 0) AS prestados,
@@ -65,7 +67,6 @@ class Dashboard
              FROM equipo e JOIN estado_equipo ee ON ee.id_estado_equipo = e.id_estado_equipo"
         )->fetch(PDO::FETCH_ASSOC);
 
-      
         $prestamos = $this->connection->query(
             "SELECT COUNT(*) AS activos,
                     COALESCE(SUM(CASE WHEN p.fecha_devolucion_programada < NOW() THEN 1 ELSE 0 END), 0) AS vencidos
@@ -76,7 +77,7 @@ class Dashboard
                              AND NOT EXISTS (SELECT 1 FROM detalle_devolucion dd WHERE dd.id_detalle_prestamo = dp.id_detalle_prestamo))"
         )->fetch(PDO::FETCH_ASSOC);
 
-        // solicitudes por aprobar y apartados por recoger 
+        
         $pendientes = $this->connection->query(
             "SELECT COALESCE(SUM(ep.nombre_estado = 'Solicitado'), 0) AS por_aprobar,
                     COALESCE(SUM(ep.nombre_estado = 'Apartado'), 0) AS por_recoger
@@ -107,10 +108,10 @@ class Dashboard
         unset($s);
 
         $data = [
-            'tipo' => $esAdmin ? 'administrador' : 'empleado',
-            'equipos'  => array_map('intval', $equipos),
+            'tipo'      => $esAdmin ? 'administrador' : 'empleado',
+            'equipos'   => array_map('intval', $equipos),
             'prestamos' => array_map('intval', $prestamos + $pendientes),
-            'stock' => $stock,
+            'stock'     => $stock,
         ];
 
         if ($esAdmin) {
