@@ -50,8 +50,7 @@ switch ($method) {
             $response->error("El valor de adquisición debe ser un número mayor o igual a 0", 11008, 400);
         }
 
-        Validar::estructuraSoloLetras($input['descripcion_equipo'] ?? '', 6005);
-
+        
         try {
             $equipo = new Equipo($conection, $response);
             $equipo->add($input);
@@ -66,8 +65,7 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? $input['id_equipo'] ?? 0);
  
-         Validar::estructuraSoloLetras($input['descripcion_equipo'] ?? '', 6005);
-
+         
         if (empty($input['id_modelo_producto']) || empty($input['id_estado_equipo'])) {
             $response->error("El modelo y el estado del equipo son obligatorios", 11007, 400);
         }

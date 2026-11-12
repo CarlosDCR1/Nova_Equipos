@@ -36,7 +36,6 @@ switch ($method) {
 
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
-        Validar::estructuraSoloLetras($input['nombre'] ?? '',1010);
         try {
             $carrera = new Carrera($conection, $response);
             $carrera->add($input);
@@ -48,7 +47,6 @@ switch ($method) {
     case 'PUT':
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
-        Validar::estructuraSoloLetras($input['nombre'] ?? '',1010);
         try {
             $carrera = new Carrera($conection, $response);
             $carrera->editar($id, $input);

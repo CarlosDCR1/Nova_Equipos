@@ -56,8 +56,7 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
 
         validarDevolucion($conection, $response, $input ?? []);
-        Validar::estructuraSoloLetras($input['observaciones'] ?? '', 6005);
-
+      
         try {
             $devolucion = new Devolucion($conection, $response);
             $devolucion->add($input);

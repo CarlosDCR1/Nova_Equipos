@@ -37,7 +37,6 @@ switch ($method) {
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
 
-        Validar::estructuraSoloLetras($input['nombreAplicacion']??'',6005);
         if (trim($input['nombreAplicacion'] ?? '') === '') {
             $response->error("El nombre de la Aplicacion es obligatorio", 7005, 400);
         }
@@ -56,7 +55,6 @@ switch ($method) {
     case 'PUT':
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
-        Validar::estructuraSoloLetras($input['nombreAplicacion']??'',6005);
         if (trim($input['nombreAplicacion'] ?? '') === '') {
             $response->error("El nombre de la aplicacion es obligatorio", 7005, 400);
         }

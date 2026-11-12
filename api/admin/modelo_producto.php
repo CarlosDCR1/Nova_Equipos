@@ -40,9 +40,7 @@ switch ($method) {
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
 
-        Validar::estructuraSoloLetras($input['nombre_modelo_producto'] ?? '', 6005);
-        Validar::estructuraSoloLetras($input['descripcion_modelo_producto'] ?? '', 6005);
-
+        
         if (empty($input['id_marca']) || empty($input['id_categoria_producto'])) {
             $response->error("La marca y la categoría son obligatorias", 10007, 400);
         }
@@ -64,9 +62,7 @@ switch ($method) {
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? $input['id_modelo_producto'] ?? 0);
 
-        Validar::estructuraSoloLetras($input['nombre_modelo_producto'] ?? '', 6005);
-        Validar::estructuraSoloLetras($input['descripcion_modelo_producto'] ?? '', 6005);
-
+        
         if (empty($input['id_marca']) || empty($input['id_categoria_producto'])) {
             $response->error("La marca y la categoría son obligatorias", 10007, 400);
         }

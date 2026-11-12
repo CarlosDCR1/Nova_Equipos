@@ -38,7 +38,6 @@ switch ($method) {
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
 
-        Validar::estructuraSoloLetras($input['nombreModulo']??'',6005);
         if (trim($input['nombreModulo'] ?? '') === '') {
             $response->error("El nombre del modulo es obligatorio", 7005, 400);
         }
@@ -57,7 +56,6 @@ switch ($method) {
     case 'PUT':
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? 0);
-        Validar::estructuraSoloLetras($input['nombreModulo']??'',6005);
         if (trim($input['nombreModulo'] ?? '') === '') {
             $response->error("El nombre del modulo es obligatorio", 7005, 400);
         }

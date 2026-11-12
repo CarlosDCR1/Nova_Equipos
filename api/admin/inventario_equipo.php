@@ -46,8 +46,7 @@ switch ($method) {
 
     case 'POST':
         $input = json_decode(file_get_contents("php://input"), true);
-        Validar::estructuraSoloLetras($input['descripcion_equipo'] ?? '', 6005);
-
+        
         if (empty($input['id_equipo'])) {
             $response->error("El equipo es obligatorio", 12007, 400);
         }
@@ -68,7 +67,6 @@ switch ($method) {
     case 'PUT':
         $input = json_decode(file_get_contents("php://input"), true);
         $id = (int) ($input['id'] ?? $input['id_inventario'] ?? 0);
-        Validar::estructuraSoloLetras($input['descripcion_equipo'] ?? '', 6005);
         
         if (empty($input['id_equipo'])) {
             $response->error("El equipo es obligatorio", 12007, 400);
