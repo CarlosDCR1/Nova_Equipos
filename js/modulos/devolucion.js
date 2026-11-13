@@ -97,5 +97,46 @@ window.Modulos.devolucion = {
         }).observe(tbody, { childList: true });
 
         await refrescar();
+
+        const selUsuario = raiz.querySelector("#f-id_usuario");
+        if (!selUsuario) return;
+
+        let idConectado = null;
+        try {
+            const json = await fetch("api/admin/Devolucion.php?lista=usuarios").then((r) => r.json());
+            const actual = (json.data || []).find((u) => Number(u.es_actual) === 1);
+            idConectado = actual ? String(actual.id_usuario) : null;
+        } catch (e) {
+            console.error("No se pudo identificar al usuario conectado:", e.message);
+        }
+
+        if (idConectado === null) return;
+
+        let usuarioEnEdicion = null; // quien registró la devolución seleccionada en la tabla
+        function aplicarUsuario() {
+            Array.from(selUsuario.options).forEach((op) => {
+                if (op.value === "") return; // opción "Selecciona..."
+                const permitido = op.value === idConectado || op.value === usuarioEnEdicion;
+                op.hidden = !permitido;
+                op.disabled = !permitido;
+            });
+            selUsuario.disabled = true;
+        }
+
+        function nuevoRegistro() {
+            usuarioEnEdicion = null;
+            aplicarUsuario();
+            selUsuario.value = idConectado;
+        }
+
+        tbody.addEventListener("click", () => {
+            usuarioEnEdicion = selUsuario.value || null;
+            aplicarUsuario();
+        });
+
+        form.addEventListener("reset", () => setTimeout(nuevoRegistro, 0));
+
+        nuevoRegistro();
+
     }
 };
