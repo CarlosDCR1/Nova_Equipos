@@ -14,16 +14,22 @@ $method = $_SERVER['REQUEST_METHOD'];
 $derechos = ['GET' => 'ver', 'POST' => 'insertar', 'PUT' => 'editar', 'DELETE' => 'eliminar'];
 Sesion::requerirPermiso('Devoluciones', 'Devolucion', $derechos[$method] ?? 'ver');
 
-function validarDevolucion(Connection $conection, Response $response, array $input): void
+function validarDevolucion(Connection $conection, Response $response, array $input, bool $esNuevo): void
 {
-    if (empty($input['id_prestamo']) || empty($input['id_usuario'])) {
-        $response->error("El préstamo y el usuario que registra son obligatorios", 17007, 400);
+    if (empty($input['id_prestamo'])) {
+        $response->error("El préstamo es obligatorio", 17007, 400);
     }
 
-    $statement = $conection->prepare("SELECT COUNT(*) FROM tblusuario WHERE idUsuario = :id AND idEmpleado IS NOT NULL");
-    $statement->execute([':id' => $input['id_usuario']]);
-    if ((int) $statement->fetchColumn() === 0) {
-        $response->error("El usuario que registra la devolución debe ser un empleado", 17009, 400);
+    if ($esNuevo) {
+        if (empty($input['id_usuario'])) {
+            $response->error("No se pudo identificar al usuario conectado", 17007, 401);
+        }
+
+        $statement = $conection->prepare("SELECT COUNT(*) FROM tblusuario WHERE idUsuario = :id AND idEmpleado IS NOT NULL");
+        $statement->execute([':id' => $input['id_usuario']]);
+        if ((int) $statement->fetchColumn() === 0) {
+            $response->error("El usuario que registra la devolución debe ser un empleado", 17009, 400);
+        }
     }
 }
 
@@ -38,7 +44,7 @@ switch ($method) {
                 break;
             }
             if (($_GET['lista'] ?? '') === 'usuarios') {
-                $devolucion->listaUsuariosEmpleado();
+                $devolucion->listaUsuariosEmpleado((int) ($_SESSION['idUsuario'] ?? 0));
                 break;
             }
 
@@ -53,9 +59,9 @@ switch ($method) {
         break;
 
     case 'POST':
-        $input = json_decode(file_get_contents("php://input"), true);
-
-        validarDevolucion($conection, $response, $input ?? []);
+        $input = json_decode(file_get_contents("php://input"), true) ?? [];
+        $input['id_usuario'] = (int) ($_SESSION['idUsuario'] ?? 0);
+        validarDevolucion($conection, $response, $input, true);
       
         try {
             $devolucion = new Devolucion($conection, $response);
@@ -72,15 +78,15 @@ switch ($method) {
         break;
 
     case 'PUT':
-        $input = json_decode(file_get_contents("php://input"), true);
+        $input = json_decode(file_get_contents("php://input"), true) ?? [];
         $id = (int) ($input['id'] ?? $input['id_devolucion'] ?? 0);
-
-        validarDevolucion($conection, $response, $input ?? []);
-
+ 
+        validarDevolucion($conection, $response, $input, false);
+ 
         try {
             $devolucion = new Devolucion($conection, $response);
             $devolucion->editar($id, $input);
-
+ 
         } catch (\Throwable $th) {
             $response->error("Error al actualizar la devolución", 17003, 400);
         }
