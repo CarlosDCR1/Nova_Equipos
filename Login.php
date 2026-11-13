@@ -8,7 +8,7 @@ Sesion::redirigirSiAutenticado();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acceso al Sistema - Nova Equipos</title>
-    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/login.css?v=<?= filemtime(__DIR__ . '/css/login.css') ?>">
 </head>
 <body>
     <main class="login-card">
@@ -28,6 +28,16 @@ Sesion::redirigirSiAutenticado();
 
             <button type="submit" id="btnIngresar">Ingresar</button>
         </form>
+
+        
+        <div class="acceso-registro">
+            <span>¿Aún no tiene una cuenta?</span>
+
+            <a class="boton-secundario" href="Registro.php">
+                Crear usuario
+            </a>
+        </div>
+
     </main>
     <script src="js/login.js"></script>
 </body>

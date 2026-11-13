@@ -22,16 +22,22 @@ function fechaHoraValida(mixed $valor): bool
 }
 
 // Validaciones comunes de POST y PUT; corta con error si algo fall
-function validarPrestamo(Connection $conection, Response $response, array $input): void
+function validarPrestamo(Connection $conection, Response $response, array $input, bool $esNuevo): void
 {
-    if (empty($input['id_estudiante']) || empty($input['id_estado_prestamo']) || empty($input['id_usuario_registro'])) {
-        $response->error("El estudiante, el estado y el usuario que registra son obligatorios", 14007, 400);
+    if (empty($input['id_estudiante']) || empty($input['id_estado_prestamo'])) {
+        $response->error("El estudiante y el estado son obligatorios", 14007, 400);
     }
 
-    $statement = $conection->prepare("SELECT COUNT(*) FROM tblusuario WHERE idUsuario = :id AND idEmpleado IS NOT NULL");
-    $statement->execute([':id' => $input['id_usuario_registro']]);
-    if ((int) $statement->fetchColumn() === 0) {
-        $response->error("El usuario que registra el préstamo debe ser un empleado", 14009, 400);
+    if ($esNuevo) {
+        if (empty($input['id_usuario_registro'])) {
+            $response->error("No se pudo identificar al usuario conectado", 14007, 401);
+        }
+
+        $statement = $conection->prepare("SELECT COUNT(*) FROM tblusuario WHERE idUsuario = :id AND idEmpleado IS NOT NULL");
+        $statement->execute([':id' => $input['id_usuario_registro']]);
+        if ((int) $statement->fetchColumn() === 0) {
+            $response->error("El usuario que registra el préstamo debe ser un empleado", 14009, 400);
+        }
     }
 
     if (!fechaHoraValida($input['fecha_devolucion_programada'] ?? '')) {
@@ -50,7 +56,7 @@ switch ($method) {
                 break;
             }
             if (($_GET['lista'] ?? '') === 'usuarios') {
-                $prestamo->listaUsuariosEmpleado();
+                $prestamo->listaUsuariosEmpleado((int) ($_SESSION['idUsuario'] ?? 0));
                 break;
             }
 
@@ -66,9 +72,13 @@ switch ($method) {
         break;
 
     case 'POST':
-        $input = json_decode(file_get_contents("php://input"), true);
+        $input = json_decode(file_get_contents("php://input"), true) ?? [];
 
-        validarPrestamo($conection, $response, $input ?? []);
+        // Quien registra el préstamo es siempre el usuario conectado: se toma de la sesión,
+        // se ignora lo que mande el formulario.
+        $input['id_usuario_registro'] = (int) ($_SESSION['idUsuario'] ?? 0);
+
+        validarPrestamo($conection, $response, $input, true);
         
         // Al crear un préstamo, la devolución programada debe ser posterior a hoy
         if (strtotime(substr($input['fecha_devolucion_programada'], 0, 10)) <= strtotime('today')) {
@@ -90,15 +100,16 @@ switch ($method) {
         break;
 
     case 'PUT':
-        $input = json_decode(file_get_contents("php://input"), true);
+        $input = json_decode(file_get_contents("php://input"), true) ?? [];
         $id = (int) ($input['id'] ?? $input['id_prestamo'] ?? 0);
+ 
 
-        validarPrestamo($conection, $response, $input ?? []);
+        validarPrestamo($conection, $response, $input, false);
         
         try {
             $prestamo = new Prestamo($conection, $response);
             $prestamo->editar($id, $input);
-
+ 
         } catch (\Throwable $th) {
             $dup = Validar::mensajeDuplicado($th);
             if ($th instanceof PDOException && in_array($th->errorInfo[1] ?? 0, [3819, 4025])) {
