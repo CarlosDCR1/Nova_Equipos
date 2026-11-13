@@ -38,14 +38,15 @@ class Prestamo
         $this->response->success("Estudiantes obtenidos correctamente", $result, 1);
     }
 
-    public function listaUsuariosEmpleado()
+        public function listaUsuariosEmpleado(int $idUsuarioActual = 0)
     {
-        $query = "SELECT idUsuario AS id_usuario, nombreUsuario AS nombre_usuario
+        $query = "SELECT idUsuario AS id_usuario, nombreUsuario AS nombre_usuario,
+                         (idUsuario = :actual) AS es_actual
                   FROM tblusuario
                   WHERE idEmpleado IS NOT NULL AND is_active = 1
                   ORDER BY nombreUsuario ASC";
         $statement = $this->connection->prepare($query);
-        $statement->execute();
+        $statement->execute([':actual' => $idUsuarioActual]);
         $result = $statement->fetchAll(PDO::FETCH_ASSOC);
         $this->response->success("Usuarios empleados obtenidos correctamente", $result, 1);
     }
@@ -106,7 +107,6 @@ class Prestamo
         $query = "UPDATE prestamo
                   SET id_estudiante = :id_estudiante,
                       id_estado_prestamo = :id_estado,
-                      id_usuario_registro = :id_usuario,
                       fecha_devolucion_programada = :programada,
                       observaciones = :observaciones
                   WHERE id_prestamo = :id";
@@ -114,7 +114,6 @@ class Prestamo
         $statement->execute([
             ':id_estudiante' => $d['id_estudiante'],
             ':id_estado' => $d['id_estado_prestamo'],
-            ':id_usuario' => $d['id_usuario_registro'],
             ':programada' => $this->fechaHora($d['fecha_devolucion_programada']),
             ':observaciones' => ($d['observaciones'] ?? '') !== '' ? $d['observaciones'] : null,
             ':id' => $id

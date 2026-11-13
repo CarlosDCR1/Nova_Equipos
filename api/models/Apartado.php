@@ -12,6 +12,8 @@ class Apartado
     const MAX_EQUIPOS      = 3;      
     const MONTO_APROBACION = 8000;
     const DIAS_PRESTAMO    = 7;
+    const ESTADO_EQUIPO_DISPONIBLE = 1;
+    const ESTADO_EQUIPO_RESERVADO  = 8;
 
     private Connection $connection;
 
@@ -160,6 +162,8 @@ class Apartado
             $st->execute([':p' => $idPrestamo, ':e' => $idEquipo]);
         }
 
+        $this->reservarEquipos($idEquipos);
+
         $st = $this->connection->prepare("SELECT apartado_hasta FROM prestamo WHERE id_prestamo = :id");
         $st->execute([':id' => $idPrestamo]);
 
@@ -186,6 +190,7 @@ class Apartado
             }
 
             $this->cambiarEstado($idPrestamo, 'Cancelado');
+            $this->liberarEquiposDePrestamo($idPrestamo); 
             return ['id_prestamo' => $idPrestamo, 'estado' => 'Cancelado'];
         });
     }
@@ -193,6 +198,8 @@ class Apartado
    
     public function disponibles(int $idEstudiante): array
     {
+        $this->liberarVencidos();
+
         $st = $this->connection->prepare(
             "SELECT e.id_equipo, e.codigo_inventario, cp.nombre_categoria_producto AS categoria,
                     mp.nombre_modelo_producto AS modelo,
@@ -286,6 +293,8 @@ class Apartado
    
     public function modelosDisponibles(int $idEstudiante): array
     {
+        $this->liberarVencidos();
+
         $st = $this->connection->prepare(
             "SELECT mp.id_modelo_producto, mp.nombre_modelo_producto AS modelo,
                     ma.nombre_marca AS marca, mp.descripcion_modelo_producto AS descripcion,
@@ -386,12 +395,13 @@ class Apartado
 
             foreach ($equipos as $idEquipo) {
                 $st = $this->connection->prepare(
-                    "SELECT e.codigo_inventario, ee.permite_prestamo
+                    "SELECT e.codigo_inventario, e.id_estado_equipo, ee.permite_prestamo
                      FROM equipo e JOIN estado_equipo ee ON ee.id_estado_equipo = e.id_estado_equipo
                      WHERE e.id_equipo = :id FOR UPDATE");
                 $st->execute([':id' => $idEquipo]);
                 $eq = $st->fetch(PDO::FETCH_ASSOC);
-                if (!$eq || !$eq['permite_prestamo']) {
+                $reservado = $eq && (int) $eq['id_estado_equipo'] === self::ESTADO_EQUIPO_RESERVADO;
+                if (!$eq || (!$reservado && !$eq['permite_prestamo'])) {
                     throw new ReglaApartado("El equipo " . ($eq['codigo_inventario'] ?? $idEquipo) . " ya no está disponible. Rechaza el préstamo");
                 }
             }
@@ -432,8 +442,21 @@ class Apartado
         )->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function liberarVencidos(): int
+        public function liberarVencidos(): int
     {
+        $st = $this->connection->prepare(
+            "UPDATE equipo e
+             JOIN detalle_prestamo dp ON dp.id_equipo = e.id_equipo
+             JOIN prestamo p ON p.id_prestamo = dp.id_prestamo
+             JOIN estado_prestamo ep ON ep.id_estado_prestamo = p.id_estado_prestamo
+                SET e.id_estado_equipo = :disponible
+              WHERE e.id_estado_equipo = :reservado
+                AND ep.nombre_estado IN ('Solicitado', 'Apartado') AND p.apartado_hasta < NOW()");
+        $st->execute([
+            ':disponible' => self::ESTADO_EQUIPO_DISPONIBLE,
+            ':reservado'  => self::ESTADO_EQUIPO_RESERVADO
+        ]);
+
         $st = $this->connection->prepare(
             "UPDATE prestamo p
              JOIN estado_prestamo ep ON ep.id_estado_prestamo = p.id_estado_prestamo
@@ -451,7 +474,30 @@ class Apartado
             JOIN modelo_producto mp ON mp.id_modelo_producto = e.id_modelo_producto
             WHERE dp.id_prestamo = p.id_prestamo)";
 
- 
+    private function reservarEquipos(array $idEquipos): void
+    {
+        $st = $this->connection->prepare("UPDATE equipo SET id_estado_equipo = :reservado WHERE id_equipo = :id");
+        foreach ($idEquipos as $idEquipo) {
+            $st->execute([':reservado' => self::ESTADO_EQUIPO_RESERVADO, ':id' => $idEquipo]);
+        }
+    }
+
+    // Devuelve a "Disponible" los equipos de un préstamo que sigan "Reservados" (al cancelar o rechazar).
+    // Si un equipo ya está en otro estado, no se toca.
+    private function liberarEquiposDePrestamo(int $idPrestamo): void
+    {
+        $st = $this->connection->prepare(
+            "UPDATE equipo e
+             JOIN detalle_prestamo dp ON dp.id_equipo = e.id_equipo
+                SET e.id_estado_equipo = :disponible
+              WHERE dp.id_prestamo = :id AND e.id_estado_equipo = :reservado");
+        $st->execute([
+            ':disponible' => self::ESTADO_EQUIPO_DISPONIBLE,
+            ':id'         => $idPrestamo,
+            ':reservado'  => self::ESTADO_EQUIPO_RESERVADO
+        ]);
+    }
+    
     private function contarEquiposAbiertos(int $idEstudiante): int
     {
         $st = $this->connection->prepare(

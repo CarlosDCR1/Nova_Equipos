@@ -6,7 +6,7 @@ const fechaManana = (() => {
     return m.getFullYear() + "-" + String(m.getMonth() + 1).padStart(2, "0") + "-" + String(m.getDate()).padStart(2, "0");
 })();
 
-window.Modulos.prestamo = Crud.crear({
+const prestamoCrud = Crud.crear({
     titulo: "Mantenimiento de Préstamos",
     api: "api/admin/Prestamo.php",
     id: "id_prestamo",
@@ -46,3 +46,56 @@ window.Modulos.prestamo = Crud.crear({
         { name: "observaciones", etiqueta: "Observaciones", maxlength: 500, autocomplete: "off" }
     ]
 });
+
+window.Modulos.prestamo = {
+    async init(raiz) {
+        await prestamoCrud.init(raiz);
+
+        const selUsuario = raiz.querySelector("#f-id_usuario_registro");
+        const form = raiz.querySelector(".crud-form");
+        const tbody = raiz.querySelector(".crud-tbody");
+        if (!selUsuario) return;
+
+        // Averigua cuál de los usuarios de la lista es el conectado
+        let idConectado = null;
+        try {
+            const json = await fetch("api/admin/Prestamo.php?lista=usuarios").then((r) => r.json());
+            const actual = (json.data || []).find((u) => Number(u.es_actual) === 1);
+            idConectado = actual ? String(actual.id_usuario) : null;
+        } catch (e) {
+            console.error("No se pudo identificar al usuario conectado:", e.message);
+        }
+        // Sin ese dato no se bloquea nada; el servidor igual registra al usuario de la sesión
+        if (idConectado === null) return;
+
+        let usuarioEnEdicion = null; // quien registró el préstamo seleccionado en la tabla
+
+        // Deja visible solo al usuario conectado (y al que registró el préstamo que se está editando)
+        function aplicar() {
+            Array.from(selUsuario.options).forEach((op) => {
+                if (op.value === "") return; // opción "Selecciona..."
+                const permitido = op.value === idConectado || op.value === usuarioEnEdicion;
+                op.hidden = !permitido;
+                op.disabled = !permitido;
+            });
+            selUsuario.disabled = true;
+        }
+
+        function nuevoRegistro() {
+            usuarioEnEdicion = null;
+            aplicar();
+            selUsuario.value = idConectado;
+        }
+
+        // Al seleccionar una fila de la tabla (para editar): se muestra quien registró ese préstamo
+        tbody.addEventListener("click", () => {
+            usuarioEnEdicion = selUsuario.value || null;
+            aplicar();
+        });
+
+        // Al limpiar el formulario (también después de agregar, editar o eliminar)
+        form.addEventListener("reset", () => setTimeout(nuevoRegistro, 0));
+
+        nuevoRegistro();
+    }
+};
