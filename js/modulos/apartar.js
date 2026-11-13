@@ -309,7 +309,7 @@ window.Modulos.apartar = (function () {
                     return el("tr", {},
                         el("td", { textContent: p.id_prestamo }),
                         el("td", {}, badgeEstado(p)),
-                        el("td", { textContent: p.equipos || "" }),
+                        el("td", {}, ...(p.equipos || "").split(/(?<=\)), /).map((t) => el("div", { textContent: t }))),
                         el("td", { textContent: plazo(p) }),
                         el("td", {}, puedeCancelar
                             ? el("button", { type: "button", className: "btn btn-danger", textContent: "Cancelar", onclick: () => cancelar(p.id_prestamo) })
