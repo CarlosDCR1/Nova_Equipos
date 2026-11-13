@@ -1,10 +1,9 @@
-
 window.Modulos = window.Modulos || {};
 
 window.Modulos.apartar = (function () {
     const API = "api/admin/Apartado.php";
     const MAX_POR_DEFECTO = 3;
-    const POR_PAGINA = 12; 
+    const POR_PAGINA = 12;
 
     async function peticion(metodo, body) {
         const res = await fetch(API, {
@@ -26,49 +25,27 @@ window.Modulos.apartar = (function () {
     const normalizar = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const aFecha = (s) => (s ? new Date(String(s).replace(" ", "T")) : null);
 
-    function fmtFecha(s) {
-        const d = aFecha(s);
-        return d ? d.toLocaleString("es-GT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
-    }
-
     function esVencido(p) {
         if (p.estado === "Vencido") return true;
         const limite = aFecha(p.fecha_devolucion_programada);
         return p.estado === "Activo" && limite && limite < new Date();
     }
 
-    function badgeEstado(p) {
-        const texto = esVencido(p) ? "Vencido" : p.estado;
-        return el("span", { className: "ap-badge ap-" + texto.toLowerCase(), textContent: texto });
-    }
-
-    function plazo(p) {
-        switch (p.estado) {
-            case "Apartado":   return "Recoger antes de " + fmtFecha(p.apartado_hasta);
-            case "Solicitado": return "Esperando aprobación";
-            case "Activo":
-            case "Vencido":    return "Devolver antes de " + fmtFecha(p.fecha_devolucion_programada);
-            default:           return "";
-        }
-    }
-
     const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
 
-   
     return {
         async init(raiz) {
-            const carrito = new Map();                             
+            const carrito = new Map();
             const vista = { categoria: window.categoriaInicialApartar ?? null, texto: "", mostrar: POR_PAGINA };
-            delete window.categoriaInicialApartar; // se usa una sola vez
-            let modelos = [];                                   
-            let restante = 0;                                      
+            delete window.categoriaInicialApartar;
+            let modelos = [];
+            let restante = 0;
             let puedeApartar = false;
 
             const aviso = el("div", { className: "ap-aviso", hidden: true });
             const cuerpo = el("div");
             raiz.replaceChildren(el("h1", { className: "page-title", textContent: "Apartar equipos" }), aviso, cuerpo);
 
-           
             const catalogo = el("div", { className: "ap-catalogo" });
             const barra = el("div", { className: "ap-carrito", hidden: true });
 
@@ -80,7 +57,6 @@ window.Modulos.apartar = (function () {
 
             const totalCarrito = () => [...carrito.values()].reduce((a, v) => a + v.cantidad, 0);
             const clave = (m, apr) => `${m.id_modelo_producto}:${apr ? 1 : 0}`;
-            
             const unidades = (m, apr) => (apr ? m.con_aprobacion : m.disponibles - m.con_aprobacion);
 
             async function cargar() {
@@ -102,22 +78,10 @@ window.Modulos.apartar = (function () {
                 } catch (e) {
                     mostrarAviso(e.message, "error");
                 }
-                await cargar(); 
+                await cargar();
                 window.scrollTo({ top: 0, behavior: "smooth" });
             }
 
-            async function cancelar(id) {
-                if (!confirm("¿Cancelar este préstamo?")) return;
-                try {
-                    await peticion("PUT", { id, accion: "cancelar" });
-                    mostrarAviso("Préstamo cancelado.", "ok");
-                } catch (e) {
-                    mostrarAviso(e.message, "error");
-                }
-                await cargar();
-            }
-
-         
             function cambiar(m, apr, delta) {
                 const k = clave(m, apr);
                 const n = Math.max(0, (carrito.get(k)?.cantidad || 0) + delta);
@@ -151,7 +115,6 @@ window.Modulos.apartar = (function () {
                         el("button", { type: "button", className: "btn btn-primary", textContent: `Apartar (${total})`, onclick: apartar })));
             }
 
-          
             function renderCatalogo() {
                 if (!modelos.length) {
                     catalogo.replaceChildren(el("p", { className: "empty-state", textContent: "No hay equipos disponibles por ahora." }));
@@ -160,7 +123,6 @@ window.Modulos.apartar = (function () {
 
                 const texto = normalizar(vista.texto);
 
-                
                 if (!vista.categoria && !texto) {
                     const categorias = new Map();
                     modelos.forEach((m) => {
@@ -180,7 +142,6 @@ window.Modulos.apartar = (function () {
                     return;
                 }
 
-                
                 const filtrados = modelos.filter((m) =>
                     (!vista.categoria || m.id_categoria_producto === vista.categoria) &&
                     (!texto || normalizar(m.modelo + " " + m.categoria).includes(texto)));
@@ -205,7 +166,6 @@ window.Modulos.apartar = (function () {
                 const visibles = filtrados.slice(0, vista.mostrar);
                 const total = totalCarrito();
 
-               
                 const variante = (m, apr) => {
                     const libres = unidades(m, apr);
                     if (!libres) return null;
@@ -244,17 +204,14 @@ window.Modulos.apartar = (function () {
                         }))
                     : null;
 
-               
                 catalogo.replaceChildren(...[encabezado, rejilla, pie].filter(Boolean));
             }
 
-           
             const buscador = el("input", {
                 type: "search", className: "ap-buscador", placeholder: "Buscar equipo o categoría...", autocomplete: "off",
                 oninput: () => { vista.texto = buscador.value; vista.mostrar = POR_PAGINA; renderCatalogo(); }
             });
 
-           
             function pintar(data) {
                 const prestamos = data.mis_prestamos || [];
                 const max = data.max ?? MAX_POR_DEFECTO;
@@ -271,7 +228,6 @@ window.Modulos.apartar = (function () {
                     con_aprobacion: Number(m.con_aprobacion)
                 }));
 
-                
                 carrito.forEach((v, k) => {
                     const m = modelos.find((x) => x.id_modelo_producto === v.id);
                     const libres = m ? unidades(m, v.apr) : 0;
@@ -287,7 +243,8 @@ window.Modulos.apartar = (function () {
                             textContent: restante
                                 ? ` · puedes apartar ${restante} más`
                                 : " · llegaste al límite: devuelve o cancela alguno para pedir más"
-                        }))
+                        }),
+                        el("a", { className: "ap-enlace", href: "#mis_prestamos", textContent: "Ver mis préstamos" }))
                 ];
                 if (hayVencido) {
                     secciones.push(el("div", {
@@ -303,28 +260,7 @@ window.Modulos.apartar = (function () {
                             buscador),
                         catalogo));
 
-                
-                const filas = prestamos.map((p) => {
-                    const puedeCancelar = ["Solicitado", "Apartado"].includes(p.estado);
-                    return el("tr", {},
-                        el("td", { textContent: p.id_prestamo }),
-                        el("td", {}, badgeEstado(p)),
-                        el("td", {}, ...(p.equipos || "").split(/(?<=\)), /).map((t) => el("div", { textContent: t }))),
-                        el("td", { textContent: plazo(p) }),
-                        el("td", {}, puedeCancelar
-                            ? el("button", { type: "button", className: "btn btn-danger", textContent: "Cancelar", onclick: () => cancelar(p.id_prestamo) })
-                            : ""));
-                });
-
-                secciones.push(
-                    el("h2", { className: "ap-subtitulo", textContent: "Mis préstamos" }),
-                    el("div", { className: "table-card" },
-                        el("table", { className: "data-table" },
-                            el("thead", {}, el("tr", {}, ...["Id", "Estado", "Equipos", "Plazo", ""].map((t) => el("th", { textContent: t })))),
-                            el("tbody", {}, ...(filas.length
-                                ? filas
-                                : [el("tr", {}, el("td", { colSpan: 5, className: "empty-state", textContent: "Todavía no tienes préstamos." }))])))),
-                    barra);
+                secciones.push(barra);
 
                 cuerpo.replaceChildren(...secciones);
                 buscador.value = vista.texto;

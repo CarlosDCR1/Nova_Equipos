@@ -26,6 +26,7 @@ class RegistroBitacora
         'inventario_equipo'  => ['Inventario', 'Inventario de equipo', 'inventario_equipo'],
         'bandeja_prestamos'  => ['Préstamos', 'Solicitud y apartados', 'prestamo'],
         'estado_prestamo'    => ['Préstamos', 'Estado de préstamo', 'estado_prestamo'],
+        'Apartar Equipo'    => ['Préstamos', 'Apartar Equipo', 'mis_prestamos'],
         'prestamo'           => ['Préstamos', 'Préstamo', 'prestamo'],
         'apartar'            => ['Préstamos', 'Apartar Equipo', 'prestamo'],
         'detalle_prestamo'   => ['Préstamos', 'Detalle de préstamo', 'detalle_prestamo'],
