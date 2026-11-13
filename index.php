@@ -68,7 +68,8 @@ Sesion::requerirPagina();
             <div class="nav-group-title">Préstamos</div>
             <ul class="nav-list">
                 <?php if (Sesion::esEstudiante()): ?>
-                    <li><a class="nav-link" href="#apartar">Apartar equipo</a></li>
+                        <li><a class="nav-link" href="#apartar">Apartar equipo</a></li>
+                        <li><a class="nav-link" href="#mis_prestamos">Mis préstamos</a></li>
                 <?php else: ?>
                     <li><a class="nav-link" href="#bandeja_prestamos">Solicitudes y apartados</a></li>
                     <li><a class="nav-link" href="#estado_prestamo">Estado de préstamo</a></li>
