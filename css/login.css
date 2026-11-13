@@ -61,3 +61,48 @@ button {
 }
 
 button:disabled { opacity: 0.6; cursor: wait; }
+
+/* Enlaces entre el login y el registro. */
+.acceso-registro {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.35);
+    text-align: center;
+}
+
+.acceso-registro span {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+/* Botón secundario para Crear usuario y Volver al login. */
+.boton-secundario {
+    display: inline-block;
+    padding: 8px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.boton-secundario:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.boton-secundario:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+}
+
+
+.acceso-registro a.boton-secundario,
+.acceso-registro a.boton-secundario:link,
+.acceso-registro a.boton-secundario:visited,
+.acceso-registro a.boton-secundario:hover,
+.acceso-registro a.boton-secundario:active,
+.acceso-registro a.boton-secundario:focus {
+    color: #ffffff;
+    text-decoration: none;
+}

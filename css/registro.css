@@ -1,0 +1,89 @@
+
+body {
+    padding: 20px 0;
+}
+
+/* Reutiliza los fondos y estilos generales de login.css. */
+.registro-card {
+    max-width: 640px;
+}
+
+.registro-card h2 {
+    text-align: center;
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.registro-fila {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.registro-fila > div {
+    min-width: 0;
+}
+
+/* El correo conserva el mismo diseño que los demás campos. */
+.registro-card input[type="email"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d5dbe1;
+    border-radius: 8px;
+    font: inherit;
+    background: #fff;
+    color: #172b4d;
+}
+
+/* Indicaciones debajo de los campos. */
+.registro-card small {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: #e3efff;
+}
+
+/* Aviso de activación inmediata. */
+.aviso-registro {
+    padding: 12px;
+    margin: 16px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* Mensajes del servidor o del formulario. */
+.registro-card .mensaje {
+    color: #fff;
+    line-height: 1.4;
+}
+
+.registro-card .mensaje:not(:empty) {
+    padding: 12px;
+    border-radius: 8px;
+    background: #842029;
+}
+
+/* Confirmación de registro correcto. */
+.registro-card .mensaje.exito {
+    background: #125c3f;
+}
+
+#btnRegistrar {
+    width: 100%;
+}
+
+/* Adaptación a celulares. */
+@media (max-width: 540px) {
+    .registro-fila {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .registro-card {
+        padding: 26px 22px;
+    }
+}
